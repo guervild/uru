@@ -1,0 +1,8 @@
+errSelfDelete := selfDelete()
+
+if errSelfDelete != nil {
+    {{if .Debug}}
+    printDebug("error","Error selfDelete: %s", errSelfDelete)
+    {{end}}
+    return
+}

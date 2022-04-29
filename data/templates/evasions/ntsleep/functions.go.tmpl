@@ -1,0 +1,22 @@
+func ntSleep() {
+
+    {{if .Debug}}
+	printDebug("info","Loading ntdll.dll")
+	{{end}}
+    ntdll := windows.NewLazySystemDLL(string([]byte{'n','t','d','l','l','.','d','l','l'}))
+    NtDelayExecution := ntdll.NewProc(string([]byte{'N','t','D','e','l','a','y','E','x','e','c','u','t','i','o','n'}))
+
+    time := -({{.Delay}} * 1000 * 10000)
+
+    _, _, err := NtDelayExecution.Call(uintptr(0), uintptr(unsafe.Pointer(&time)))
+	if err != syscall.Errno(0){
+		{{if .Debug}}
+		printDebug("error","Error calling NtDelayExecution:\n%s", err)
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","NtDelayExecution finished")
+	{{end}}
+}

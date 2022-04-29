@@ -1,0 +1,38 @@
+payload:
+  artifacts:
+    - name: sleep
+      type: evasion
+      args:
+        - name: delay
+          value: "0"
+    - name: patchetw
+      type: evasion
+    - name: english-words
+      type: evasion
+      args:
+        - name: NumberOfWord
+          value: 100
+    - name: xor
+      type: encoder
+      args:
+        - name: Key
+          value: "mykey"
+    - name: hex
+      type: encoder
+    - name: zip
+      type: encoder
+    - name: reverse-order
+      type: encoder
+    - name: windows/native/local/go-shellcode-syscall
+      type: injector
+  #sgn: false #must be decommented in the code to be used
+  type: exe
+  arch: x64
+  debug: false
+  obfuscation: false #need garble to be installed
+  #append: 90909090
+  #prepend: 90909090
+  #Example how to use tampering options
+  #file_properties_path: ./main.json
+  #limelighter:
+  #  domain: mydomain.com

@@ -1,0 +1,8 @@
+shellcode, errRc4 := decryptRc4Data(shellcode, "{{.Key}}")
+
+if errRc4 != nil {
+	{{if .Debug}}
+	printDebug("error","RC4 decrypt function error: %s", errRc4)
+	{{end}}
+	return
+}

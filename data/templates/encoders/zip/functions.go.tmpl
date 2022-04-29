@@ -1,0 +1,18 @@
+func unzip(content []byte) ([]byte, error) {
+
+	zipReader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
+
+	if err != nil {
+		return nil, err
+	}
+
+	zipFile := zipReader.File[0]
+
+	f, err := zipFile.Open()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(f)
+}

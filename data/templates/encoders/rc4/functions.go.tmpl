@@ -1,0 +1,12 @@
+func decryptRc4Data(input []byte, key string) ([]byte, error) {
+	cipher, err := rc4.NewCipher([]byte(key))
+	if err != nil {
+		return nil, err
+	}
+
+	decryptedBytes := make([]byte, len(input))
+	
+	cipher.XORKeyStream(decryptedBytes, input)
+
+	return decryptedBytes, nil
+}

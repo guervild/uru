@@ -1,0 +1,8 @@
+shellcode, errZip := unzip(shellcode)
+
+if errZip != nil {
+	{{if .Debug}}
+	printDebug("error","Unzip function error: %s", errZip)
+	{{end}}
+	return
+}

@@ -1,0 +1,7 @@
+func encryptDecrypt(input []byte, key string) (output []byte) {
+	kL := len(key)
+	for i := range input {
+		output = append(output, byte(input[i] ^ key[i%kL]))
+	}
+	return output
+}

