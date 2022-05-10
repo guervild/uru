@@ -21,7 +21,7 @@ _ = out_{{ .SubName }}
 if  err_{{ .SubName }} != nil {
     {{if .Debug}}
 	printDebug("error","There was an error patching the ntdll!EtwEvenWrite function: %s", err_{{ .SubName }})
-    printDebug("info","Error while patching... continue)
+    printDebug("info","Error while patching... continue")
     {{end}}
 } else {
     {{if .Debug}}
