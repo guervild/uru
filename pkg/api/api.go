@@ -88,7 +88,7 @@ func (a *App) generatePayload(w http.ResponseWriter, r *http.Request) {
 	clearHeader := false
 
 	if srdi && strings.ToLower(fClearHeader) == "true" {
-		logger.Logger.Info().Msg("Payload sent to api is a dll. srdi flag has been passed")
+		logger.Logger.Info().Msg("clearHeader is passed, PE header will be removed")
 		clearHeader = true
 	}
 
