@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"io/ioutil"
-	"path/filepath"
 	"os"
+	"path/filepath"
 
 	"github.com/guervild/uru/pkg/builder"
 	"github.com/guervild/uru/pkg/common"
@@ -19,12 +19,15 @@ var generateCmd = &cobra.Command{
 	Run:   Generate,
 }
 var (
-	Payload    string
-	Config     string
-	Executable bool
+	Payload string
+	Config  string
+	Donut   bool
+	Srdi    bool
 	//Keep       bool
-	Parameters string
-	Output     string
+	Parameters   string
+	FunctionName string
+	Output       string
+	ClearHeader  bool
 )
 
 func init() {
@@ -34,9 +37,13 @@ func init() {
 	generateCmd.MarkFlagRequired("payload")
 	generateCmd.Flags().StringVarP(&Config, "config", "c", "", "Config file that definied the modules to use")
 	generateCmd.MarkFlagRequired("config")
-	generateCmd.Flags().StringVarP(&Parameters, "parameters", "", "", "Parameters to pass to the executable")
+	generateCmd.Flags().StringVarP(&Parameters, "parameters", "", "", "Parameters to pass to the payload (use with donut/srdi)")
 	generateCmd.Flags().StringVarP(&Output, "output", "o", "", "Output file name")
-	generateCmd.Flags().BoolVarP(&Executable, "exe", "", false, "Process the given payload as an executable")
+	generateCmd.Flags().BoolVarP(&Donut, "donut", "", false, "Process the given payload as an executable using go-donut")
+	generateCmd.Flags().BoolVarP(&Srdi, "srdi", "", false, "Convert dll into a position independant code that uses a rdll loader to execute the dll entrypoint.")
+	generateCmd.Flags().StringVarP(&FunctionName, "functionname", "", "", "Function name to call after DLL Main (use with srdi)")
+	generateCmd.Flags().BoolVarP(&ClearHeader, "clearheader", "", false, "Remove peheader of the payload if set (use with srdi)")
+
 	//generateCmd.Flags().BoolVarP(&Executable, "keep", "", false, "Keep the content of the out directory (generated code, but also obfuscated code and cache if obfuscation is set to true)")
 
 }
@@ -74,7 +81,7 @@ func Generate(cmd *cobra.Command, args []string) {
 		logger.Logger.Fatal().Msg(err.Error())
 	}
 
-	payloadPath, _, err := payloadConfig.GeneratePayload(payloadData, Executable, true, Parameters)
+	payloadPath, _, err := payloadConfig.GeneratePayload(payloadData, Donut, Srdi, true, Parameters, FunctionName, ClearHeader)
 	if err != nil {
 		logger.Logger.Fatal().Msgf("Error during build: %s", err.Error())
 	}
@@ -85,7 +92,7 @@ func Generate(cmd *cobra.Command, args []string) {
 			logger.Logger.Fatal().Msgf("Error while moving the payload: %s", err.Error())
 		}
 		payloadPath = Output
-	} 
+	}
 
 	logger.Logger.Info().Msgf("Payload can be found here: %s", payloadPath)
 }

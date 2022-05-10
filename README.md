@@ -22,25 +22,35 @@ Usage:
   uru generate [flags]
 
 Flags:
+      --clearheader                    Remove peheader of the payload if set (use with srdi)
   -c, --config string                  Config file that definied the modules to use
-      --exe                            Process the given payload as an executable
+      --donut                          Process the given payload as an executable using go-donut
+      --functionname string            Function name to call after DLL Main (use with srdi)
   -h, --help                           help for generate
   -o, --output string                  Output file name
-      --parameters string              Parameters to pass to the executable
+      --parameters string              Parameters to pass to the payload (use with donut/srdi)
   -p, --payload Shellcode/Executable   Shellcode/Executable to use in the generated payload
+      --srdi                           Convert dll into a position independant code that uses a rdll loader to execute the dll entrypoint.
 ```
 `-c/--config` a config file, a example is provided, see [example_config.yml](./example_config.yml). The [Config file](#config-file) section will helps you to build your own configuration file.
 
 `-p/--payload` the path to the payload you want to execute/inject.
 
-`--exe` to process the payload as a binary. It will use [go-donut](https://github.com/Binject/go-donut) to obtain a shellcode.
+`--donut` to process the payload as a binary. It will use [go-donut](https://github.com/Binject/go-donut) to obtain a shellcode.
 
-`--parameters` parameters to pass to the binary (works only if `--exe` is passed as an argument).
+`--parameters` parameters to pass to the payload (works only if `--donut` or `--srdi` is passed as an argument).
+
+`--srdi` convert the payload into a srdi shellcode.
+
+`--clearheader` will remove PE header when using `--srdi`.
+
+`--functionname` will execute a specific function after dllMain, when using `--srdi`.
+
 `-o/--output` to specify a specific output filename and location.
 
 Example:
 ```
-./uru generate -c <pathtoconfig.yml> -p <pathtopayload> --exe
+./uru generate -c <pathtoconfig.yml> -p <pathtopayload> --donut
 ```
 
 ### Server mode
@@ -322,3 +332,4 @@ Do not hesitate to contribute with issue/pull request if you find a bug, or if y
 - [BananaPhone](https://github.com/C-Sto/BananaPhone)
 - [LimeLighter](https://github.com/Tylous/Limelighter)
 - [Garble](https://github.com/burrowers/garble)
+- [leoloobeek's Srdi implementation](https://gist.github.com/leoloobeek/c726719d25d7e7953d4121bd93dd2ed3)

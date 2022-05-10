@@ -56,18 +56,40 @@ func (a *App) generatePayload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fExe := r.URL.Query().Get("exe")
-	exe := false
+	fDonut := r.URL.Query().Get("donut")
+	godonut := false
 
-	if strings.ToLower(fExe) == "true" {
-		logger.Logger.Info().Msg("Payload sent to api is a binary. exe flag has been passed")
-		exe = true
+	if strings.ToLower(fDonut) == "true" {
+		logger.Logger.Info().Msg("Payload sent to api is a binary. donut flag has been passed")
+		godonut = true
+	}
+
+	fSrdi := r.URL.Query().Get("srdi")
+	srdi := false
+
+	if strings.ToLower(fSrdi) == "true" {
+		logger.Logger.Info().Msg("Payload sent to api is a dll. srdi flag has been passed")
+		srdi = true
 	}
 
 	fParameters := r.URL.Query().Get("parameters")
 
-	if exe && fParameters != "" {
+	if (godonut || srdi) && fParameters != "" {
 		logger.Logger.Info().Msgf("The following parameters will be passed to the payload: %s", fParameters)
+	}
+
+	fFunctionName := r.URL.Query().Get("functionName")
+
+	if srdi && fFunctionName != "" {
+		logger.Logger.Info().Msgf("The following functionName will be used: %s", fParameters)
+	}
+
+	fClearHeader := r.URL.Query().Get("clearHeader")
+	clearHeader := false
+
+	if srdi && strings.ToLower(fClearHeader) == "true" {
+		logger.Logger.Info().Msg("Payload sent to api is a dll. srdi flag has been passed")
+		clearHeader = true
 	}
 
 	payloadData := bytes.NewBuffer(nil)
@@ -95,7 +117,7 @@ func (a *App) generatePayload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Process payload file
-	payloadPath, _, err := payloadConfig.GeneratePayload(payloadData.Bytes(), exe, true, fParameters)
+	payloadPath, _, err := payloadConfig.GeneratePayload(payloadData.Bytes(), godonut, srdi, true, fParameters, fFunctionName, clearHeader)
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Error while generating the payload")
 		respondWithError(w, http.StatusInternalServerError, err.Error())

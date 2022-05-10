@@ -92,7 +92,7 @@ func NewPayloadConfigFromFile(data []byte) (PayloadConfig, error) {
 	return p, nil
 }
 
-func (payloadConfig *PayloadConfig) GeneratePayload(payload []byte, executable, keep bool, parameters string) (string, []byte, error) {
+func (payloadConfig *PayloadConfig) GeneratePayload(payload []byte, godonut, srdi, keep bool, parameters, functionName string, clearHeader bool) (string, []byte, error) {
 
 	//TODO rework createfilefunc
 	//define var that will be use later by generate
@@ -157,8 +157,12 @@ func (payloadConfig *PayloadConfig) GeneratePayload(payload []byte, executable, 
 		debugInstance = common.GetDebugInstance()
 	}
 
-	if executable {
-		logger.Logger.Info().Msg("Payload is an executable, will use go-donut...")
+	if godonut == true && srdi == true {
+		return "", nil, fmt.Errorf("donut and srdi can't be passed together. Choose only one between the two arguments")
+	}
+
+	if godonut {
+		logger.Logger.Info().Bool("donut", godonut).Msg("Payload is an executable, will use go-donut...")
 
 		shellcode, err := donut.ShellcodeFromBytes(bytes.NewBuffer(payloadData), &donut.DonutConfig{
 			Arch:       donut.X84,
@@ -176,6 +180,11 @@ func (payloadConfig *PayloadConfig) GeneratePayload(payload []byte, executable, 
 		}
 
 		payloadData = shellcode.Bytes()
+	}
+
+	if srdi {
+		logger.Logger.Info().Bool("srdi", srdi).Bool("clearHeader", clearHeader).Str("functionName", functionName).Str("parameters", parameters).Msg("Payload will be converted to srdi shellcode")
+		payloadData = encoder.ConvertToSRDIShellcode(payloadData, functionName, parameters, clearHeader)
 	}
 
 	//[SGN] - DECOMMENT TO USE SGN
@@ -306,7 +315,7 @@ func (payloadConfig *PayloadConfig) GeneratePayload(payload []byte, executable, 
 	tmpPayloadData := payloadData
 	var tmpPayloadDataout []byte
 
-	for i := len(encodersStringArray)-1; i >= 0; i-- {
+	for i := len(encodersStringArray) - 1; i >= 0; i-- {
 
 		e := encodersStringArray[i]
 		artifactValue := encodersArray[i]
