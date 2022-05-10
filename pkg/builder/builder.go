@@ -451,6 +451,15 @@ func (payloadConfig *PayloadConfig) GeneratePayload(payload []byte, godonut, srd
 		}
 	*/
 
+	fileContent, err := os.ReadFile(goBinFile)
+	if err != nil {
+		return "", nil, err
+	}
+
+	logger.Logger.Info().Str("md5", common.GetMD5Hash(fileContent)).Msg("Get MD5 hash of the payload")
+	logger.Logger.Info().Str("sha1", common.GetSHA1Hash(fileContent)).Msg("Get SHA1 hash of the payload")
+	logger.Logger.Info().Str("sha256", common.GetSHA256Hash(fileContent)).Msg("Get SHA256 hash of the payload")
+
 	//Signing
 	if (payloadConfig.Payload.LimeLighterArgs != LimeLighterArgs{}) {
 		logger.Logger.Info().Str("file_to_sign", goBinFile).Msg("Using Limelighter by @Tyl0us")
@@ -463,6 +472,15 @@ func (payloadConfig *PayloadConfig) GeneratePayload(payload []byte, godonut, srd
 		} else {
 			logger.Logger.Info().Msgf("Signed File Created: %s", fSigned)
 			goBinFile = fSigned
+
+			fileContent, err := os.ReadFile(goBinFile)
+			if err != nil {
+				return "", nil, err
+			}
+
+			logger.Logger.Info().Str("md5", common.GetMD5Hash(fileContent)).Msg("Get MD5 hash of the signed payload")
+			logger.Logger.Info().Str("sha1", common.GetSHA1Hash(fileContent)).Msg("Get SHA1 hash of the signed payload")
+			logger.Logger.Info().Str("sha256", common.GetSHA256Hash(fileContent)).Msg("Get SHA256 hash of the signed payload")
 		}
 	}
 
