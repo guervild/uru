@@ -11,7 +11,6 @@
   - maybe something in another repository like nuclei
 - donut as an output
 - rewrite compiler methods
-- Add DockerFile
 - Add api web ui
 - store the different configuration used in a database, if someone want to generate using pre-defined configuration 
-- provide hash (sha1,md5,etc.) for the generated payload and store them (ioc)
+- store hashes (ioc)

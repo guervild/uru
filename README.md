@@ -81,6 +81,19 @@ Here is an example to use the api call with the curl command:
 curl -F config=@<path to config> -F payload=@<path to payload> http://127.0.0.1:8081/generate?exe=true -o <ypur payload name>
 ```
 
+## Dockerfile
+
+A dockerfile is provided if you want to run the tool in an isolate environment or in your infrastructure.
+To build the docker:
+```
+docker build -t uru .
+```
+
+Then, you can use the serve command for example:
+```
+docker run -p 8081:8081 uru serve --debug
+```
+
 ## Config file
 
 The config file is the core of your generated payload. It contains modules under a yml structure named "artifacts", and global options.
