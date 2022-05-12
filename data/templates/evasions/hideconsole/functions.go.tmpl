@@ -1,5 +1,5 @@
 func hideConsole(show bool) {
-	getWin := syscall.NewLazyDLL(string([]byte{'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l'})).NewProc(string([]byte{'G','e','t','C','o','n','s','o','l','e','W','i','n','d','o','w'})")
+	getWin := syscall.NewLazyDLL(string([]byte{'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l'})).NewProc(string([]byte{'G','e','t','C','o','n','s','o','l','e','W','i','n','d','o','w'}))
 	showWin := syscall.NewLazyDLL("user32.dll").NewProc(string([]byte{'S','h','o','w','W','i','n','d','o','w'}))
 	hwnd, _, _ := getWin.Call()
 	if hwnd == 0 {
