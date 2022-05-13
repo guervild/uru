@@ -1,3 +1,6 @@
+{{if .Debug}}
+printDebug("info","Unhex the payload data")
+{{end}}
 shellcode, errHex := hex.DecodeString(string(shellcode))
 if errHex != nil {
 	{{if .Debug}}

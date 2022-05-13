@@ -1,1 +1,7 @@
-time.Sleep({{.Delay}} * time.Second)
+{{if .Debug}}
+printDebug("info","Sleep for {{ .Delay }} seconds")
+{{end}}
+time.Sleep({{ .Delay }} * time.Second)
+{{if .Debug}}
+printDebug("info","Sleep finished")
+{{end}}

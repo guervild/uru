@@ -9,6 +9,7 @@ import (
 
 type SleepEvasion struct {
 	Name        string
+	Debug       bool
 	Delay       string
 	Description string
 }
@@ -16,6 +17,7 @@ type SleepEvasion struct {
 func NewSleepEvasion() models.ObjectModel {
 	return &SleepEvasion{
 		Name:  "sleep",
+		Debug: false,
 		Delay: "5",
 		Description: `Sleep during a fixed amount of time in seconds.
   Argument(s):

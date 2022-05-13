@@ -1,6 +1,15 @@
+{{if .Debug}}
+printDebug("info","Check if machine is joined to a domain")
+{{end}}
 var checkIsDomainJoined bool
 	checkIsDomainJoined, _ = isDomainJoined()
 if checkIsDomainJoined == true {
+	{{if .Debug}}
+	printDebug("info","Machine is joined to a domain, continue ...")
+	{{end}}
 } else {
+	{{if .Debug}}
+	printDebug("info","Machine is not joined to a domain, exit ...")
+	{{end}}
 	return 
 }

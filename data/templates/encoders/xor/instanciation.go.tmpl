@@ -1,1 +1,4 @@
+{{if .Debug}}
+printDebug("info","XOR payload data")
+{{end}}
 shellcode = encryptDecrypt(shellcode, "{{.Key}}")

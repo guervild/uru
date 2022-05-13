@@ -3,13 +3,19 @@ func hideConsole(show bool) {
 	showWin := syscall.NewLazyDLL("user32.dll").NewProc(string([]byte{'S','h','o','w','W','i','n','d','o','w'}))
 	hwnd, _, _ := getWin.Call()
 	if hwnd == 0 {
-			return
+		return
 	}
 	if show {
-	   var swRestore uintptr = 9
-	   showWin.Call(hwnd, swRestore)
+		{{if .Debug}}
+		printDebug("info","Will show the program console")
+		{{end}}
+		var swRestore uintptr = 9
+		showWin.Call(hwnd, swRestore)
 	} else {
-	   var swHide uintptr = 0
-	   showWin.Call(hwnd, swHide)
+		{{if .Debug}}
+		printDebug("info","Hide the program console")
+		{{end}}
+		var swHide uintptr = 0
+	   	showWin.Call(hwnd, swHide)
 	}
 }

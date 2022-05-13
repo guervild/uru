@@ -19,7 +19,7 @@ func NewNtSleepEvasion() models.ObjectModel {
 		Name:        "NtSleep",
 		Debug:       false,
 		Delay:       "5",
-		Description: `NtSleep during a fixed amount of time in seconds using NtDelayExecution API call,
+		Description: `NtSleep during a fixed amount of time in seconds using NtDelayExecution API call
   Argument(s):
     Delay: default value is 5s`,
 	}
