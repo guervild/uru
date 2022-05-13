@@ -42,19 +42,23 @@ func (a *App) generatePayload(w http.ResponseWriter, r *http.Request) {
 	xforward := r.Header.Get("X-Forwarded-For")
 	logger.Logger.Info().Str("IP", ip).Str("x-forwarded-for", xforward).Msg("New connection to the /generate endpoint")
 
-	payloadFile, _, err := r.FormFile("payload")
+	payloadFile, payloadFileHeader, err := r.FormFile("payload")
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Error Retrieving the payload")
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Error retrieving payload: %s", err.Error()))
 		return
 	}
 
-	configFile, _, err := r.FormFile("config")
+	logger.Logger.Info().Str("IP", ip).Str("filename", payloadFileHeader.Filename).Msg("Received a payload")
+
+	configFile, configFileHeader, err := r.FormFile("config")
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Error Retrieving the config")
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Error retrieving config: %s", err.Error()))
 		return
 	}
+
+	logger.Logger.Info().Str("IP", ip).Str("filename", configFileHeader.Filename).Msg("Received a config file")
 
 	fDonut := r.URL.Query().Get("donut")
 	godonut := false
@@ -80,8 +84,14 @@ func (a *App) generatePayload(w http.ResponseWriter, r *http.Request) {
 
 	fFunctionName := r.URL.Query().Get("functionName")
 
-	if srdi && fFunctionName != "" {
-		logger.Logger.Info().Msgf("The following functionName will be used: %s", fParameters)
+	if (godonut || srdi) && fFunctionName != "" {
+		logger.Logger.Info().Msgf("The following functionName will be used: %s", fFunctionName)
+	}
+
+	fClass := r.URL.Query().Get("class")
+
+	if (godonut || srdi) && fClass != "" {
+		logger.Logger.Info().Msgf("The following Class will be used: %s", fClass)
 	}
 
 	fClearHeader := r.URL.Query().Get("clearHeader")
@@ -117,7 +127,7 @@ func (a *App) generatePayload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Process payload file
-	payloadPath, _, err := payloadConfig.GeneratePayload(payloadData.Bytes(), godonut, srdi, true, fParameters, fFunctionName, clearHeader)
+	payloadPath, _, err := payloadConfig.GeneratePayload(payloadFileHeader.Filename, payloadData.Bytes(), godonut, srdi, true, fParameters, fFunctionName, fClass, clearHeader)
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Error while generating the payload")
 		respondWithError(w, http.StatusInternalServerError, err.Error())

@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -21,7 +20,6 @@ import (
 	"github.com/guervild/uru/pkg/models"
 	"github.com/guervild/uru/pkg/tampering"
 
-	"github.com/Binject/go-donut/donut"
 	"gopkg.in/yaml.v2"
 )
 
@@ -92,7 +90,7 @@ func NewPayloadConfigFromFile(data []byte) (PayloadConfig, error) {
 	return p, nil
 }
 
-func (payloadConfig *PayloadConfig) GeneratePayload(payload []byte, godonut, srdi, keep bool, parameters, functionName string, clearHeader bool) (string, []byte, error) {
+func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []byte, godonut, srdi, keep bool, parameters, functionName, class string, clearHeader bool) (string, []byte, error) {
 
 	//TODO rework createfilefunc
 	//define var that will be use later by generate
@@ -164,22 +162,12 @@ func (payloadConfig *PayloadConfig) GeneratePayload(payload []byte, godonut, srd
 	if godonut {
 		logger.Logger.Info().Bool("donut", godonut).Msg("Payload is an executable, will use go-donut...")
 
-		shellcode, err := donut.ShellcodeFromBytes(bytes.NewBuffer(payloadData), &donut.DonutConfig{
-			Arch:       donut.X84,
-			Type:       donut.DONUT_MODULE_EXE,
-			InstType:   donut.DONUT_INSTANCE_PIC,
-			Entropy:    donut.DONUT_ENTROPY_DEFAULT,
-			Compress:   1,
-			Format:     1,
-			Bypass:     3,
-			Parameters: parameters,
-		})
-
+		shellcode, err := encoder.ConvertToGoDonutShellcode(payloadData, filepath.Ext(filename), class, functionName, parameters)
 		if err != nil {
 			return "", nil, err
 		}
 
-		payloadData = shellcode.Bytes()
+		payloadData = shellcode
 	}
 
 	if srdi {

@@ -26,6 +26,7 @@ var (
 	//Keep       bool
 	Parameters   string
 	FunctionName string
+	Class 		 string
 	Output       string
 	ClearHeader  bool
 )
@@ -41,7 +42,8 @@ func init() {
 	generateCmd.Flags().StringVarP(&Output, "output", "o", "", "Output file name")
 	generateCmd.Flags().BoolVarP(&Donut, "donut", "", false, "Process the given payload as an executable using go-donut")
 	generateCmd.Flags().BoolVarP(&Srdi, "srdi", "", false, "Convert dll into a position independant code that uses a rdll loader to execute the dll entrypoint.")
-	generateCmd.Flags().StringVarP(&FunctionName, "functionname", "", "", "Function name to call after DLL Main (use with srdi)")
+	generateCmd.Flags().StringVarP(&FunctionName, "functionname", "", "", "Methods to call if .Net payload (with donut) or Function name to call after DLL Main (with srdi)")
+	generateCmd.Flags().StringVarP(&Class, "class", "", "", ".Net Class to call (use with donut)")
 	generateCmd.Flags().BoolVarP(&ClearHeader, "clearheader", "", false, "Remove peheader of the payload if set (use with srdi)")
 
 	//generateCmd.Flags().BoolVarP(&Executable, "keep", "", false, "Keep the content of the out directory (generated code, but also obfuscated code and cache if obfuscation is set to true)")
@@ -81,7 +83,7 @@ func Generate(cmd *cobra.Command, args []string) {
 		logger.Logger.Fatal().Msg(err.Error())
 	}
 
-	payloadPath, _, err := payloadConfig.GeneratePayload(payloadData, Donut, Srdi, true, Parameters, FunctionName, ClearHeader)
+	payloadPath, _, err := payloadConfig.GeneratePayload(payloadFilepath, payloadData, Donut, Srdi, true, Parameters, FunctionName, Class, ClearHeader)
 	if err != nil {
 		logger.Logger.Fatal().Msgf("Error during build: %s", err.Error())
 	}
