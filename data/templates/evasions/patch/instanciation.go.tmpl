@@ -1,0 +1,41 @@
+dataFromHex_{{ .SubName }}, errdataFromHex := hex.DecodeString("{{ .Data }}")
+if errdataFromHex != nil {
+    {{if .Debug}}
+    printDebug("error","there was an error decoding the patch to bytes: %s", errdataFromHex)
+    {{end}}
+//    return
+}
+
+if errdataFromHex == nil {
+    {{if eq .UseBanana "true"}}
+    out_{{ .SubName }}, err_{{ .SubName }} := patchBanana_{{ .SubName }}("{{ .Module }}", "{{ .Proc }}", &dataFromHex_{{ .SubName }})
+    {{ if not .Debug }}
+    _ = out_{{ .SubName }}
+    {{end}}
+    if  err_{{ .SubName }} != nil {
+        {{if .Debug}}
+        printDebug("error","There was an error patching the {{ .Module }}!{{ .Proc}} function: %s", err_{{ .SubName }})
+        printDebug("info","Error while patching... continue")
+        {{end}}
+    } else {
+        {{if .Debug}}
+        printDebug("info", out_{{ .SubName }})
+        {{end}}
+    }
+    {{ else }}
+    out_{{ .SubName }}, err_{{ .SubName }} := patch_{{ .SubName }}("{{ .Module }}", "{{ .Proc }}", &dataFromHex_{{ .SubName }})
+    {{ if not .Debug }}
+    _ = out_{{ .SubName }}
+    {{end}}
+    if  err_{{ .SubName }} != nil {
+        {{if .Debug}}
+        printDebug("error","There was an error patching the {{ .Module }}!{{ .Proc}} function: %s", err_{{ .SubName }})
+        printDebug("info","Error while patching... continue")
+        {{end}}
+    } else {
+        {{if .Debug}}
+        printDebug("info", out_{{ .SubName }})
+        {{end}}
+    }
+    {{ end }}
+}

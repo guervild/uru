@@ -49,5 +49,5 @@ func (e *PatchEtwEvasion) RenderInstanciationCode(data embed.FS) (string, error)
 }
 
 func (e *PatchEtwEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-	return common.CommonRendering(data, "templates/evasions/commons/patch_functions.go.tmpl", e)
+	return common.CommonRendering(data, "templates/evasions/patch/patch_functions.go.tmpl", e)
 }

@@ -30,6 +30,10 @@ func GetEvasion(evasionType string) (models.ObjectModel, error) {
 		return NewEnglishWordsEvasion(), nil
 	}
 
+	if evasionType == "patch" {
+		return NewPatchEvasion(), nil
+	}
+
 	if evasionType == "patchetw" {
 		return NewPatchEtwEvasion(), nil
 	}

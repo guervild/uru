@@ -84,6 +84,7 @@ func listEvasions() map[string]string {
 		"english-words",
 		"patchamsi",
 		"patchetw",
+		"patch",
 	}
 
 	for _, v := range evasions {
