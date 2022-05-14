@@ -11,6 +11,7 @@ type XorEncoder struct {
 	Name        string
 	Key         string
 	Description string
+	Debug       bool
 }
 
 func NewXorEncoder() models.ObjectModel {
