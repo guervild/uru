@@ -5,7 +5,16 @@ Uru is a payload generation tool that enables you to create payload based on a c
 ## Prerequisites
 To use all the functionnalities offered by Uru, it is recommended to install:
 - [garble](https://github.com/burrowers/garble)
+  
+```
+go install mvdan.cc/garble@latest
+```
+
 - [bananaphone](https://github.com/C-Sto/BananaPhone)
+
+```
+go get github.com/C-Sto/BananaPhone
+```
 
 To use the signing option (limelighter), the following packages are needed:
 - openssl
@@ -22,10 +31,11 @@ Usage:
   uru generate [flags]
 
 Flags:
+      --class string                   .Net Class to call (use with donut)
       --clearheader                    Remove peheader of the payload if set (use with srdi)
   -c, --config string                  Config file that definied the modules to use
       --donut                          Process the given payload as an executable using go-donut
-      --functionname string            Function name to call after DLL Main (use with srdi)
+      --functionname string            Methods to call if .Net payload (with donut) or Function name to call after DLL Main (with srdi)
   -h, --help                           help for generate
   -o, --output string                  Output file name
       --parameters string              Parameters to pass to the payload (use with donut/srdi)
@@ -45,6 +55,8 @@ Flags:
 `--clearheader` will remove PE header when using `--srdi`.
 
 `--functionname` will execute a specific function after dllMain, when using `--srdi`.
+
+`--class` .Net Class to call (use with donut).
 
 `-o/--output` to specify a specific output filename and location.
 
@@ -73,12 +85,17 @@ The api endpoint `/generate` accepts two files in entrypoint:
 - `payload` the payload to process
 
 It also accepts two parameters:
-- `exe` if the payload is an executable, it will use [go-donut](https://github.com/Binject/go-donut) to obtain a shellcode. Must be equal to "true".
-- `parameters` parameters to pass to the binary (works only if `exe` is passed)
+- `donut` if the payload is an executable, it will use [go-donut](https://github.com/Binject/go-donut) to obtain a shellcode. Must be equal to "true".
+- `srdi` convert the payload into a srdi shellcode. Must be equal to "true".
+- `parameters` parameters to pass to the binary (need `donut` or `srdi`)
+- `functionname` function name / method to call (need `donut` or `srdi`)
+- `class` .Net class to pass to go-donut. (need `donut`)
+- `clearheader` remove the peHeader (need `srdi`). Must be equal to "true".
+
 
 Here is an example to use the api call with the curl command:
 ```
-curl -F config=@<path to config> -F payload=@<path to payload> http://127.0.0.1:8081/generate?exe=true -o <ypur payload name>
+curl -F config=@<path to config> -F payload=@<path to payload> http://127.0.0.1:8081/generate?donut=true -o <your payload name>
 ```
 
 ## Dockerfile
@@ -176,11 +193,12 @@ Evasions are the modules that help you to evade AV/EDR:
 |      Name      | Description | Argument(s) | Comment |
 |:--------------:|-------------|-------------|---------|
 | english-words  | Add a random number of english words to the binary. | NumberOfWord: define the number of english words to add to the binary between 1 and 1000. | Note that the words will no be obfuscated when using garble |
-| hideconsole    | Prevent windows console to be displayed. | None | |
+| hideconsole    | Prevent windows console to be displayed. | Show: Show the console or not. Default is "false" | |
 | isdomainjoined | Check if current computer is joined to a domain. | None | |
 | ntsleep        | NtSleep during a fixed amount of time in seconds using NtDelayExecution API call | Delay: the amount of time to sleep, default is 5s | |
 | patchamsi      | Path amsi. (credits: method taken from Merlin, @Ne0nd0g) | UseBanana: if set to "true", use bananaphone to perform syscall | |
 | patchetw       | Path etw. (credits: method taken from Merlin, @Ne0nd0g) | UseBanana: if set to "true", use bananaphone to perform syscall | |
+| patch       | Path a given function. (credits: method taken from Merlin, @Ne0nd0g) |     Module: the module where the function is. Example: "ntdll.dll", Proc: the function to patch. Example: "EtwEventWrite", Data: the data to use to patch the function in hex, UseBanana: if set to "true", use bananaphone to perform syscall | By default it patch etw to its "normal state"|
 | selfdelete     | Delete the current binary during runtime | None | |
 | sleep          | Sleep during a fixed amount of time in seconds. | Delay: the amount of time to sleep, default is 5s | |
 
