@@ -1,9 +1,9 @@
-FROM golang:1.17 as builder
+FROM golang:1.18 as builder
 
 WORKDIR /app
 COPY . ./
 RUN go mod download
-RUN  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o uru -ldflags="-w -s" .
+RUN  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o uru -trimpath -ldflags="-w -s" .
 
 FROM alpine:latest as osslsigncode
 
