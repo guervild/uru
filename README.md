@@ -201,6 +201,8 @@ Evasions are the modules that help you to evade AV/EDR:
 | patch       | Path a given function. (credits: method taken from Merlin, @Ne0nd0g) |     Module: the module where the function is. Example: "ntdll.dll", Proc: the function to patch. Example: "EtwEventWrite", Data: the data to use to patch the function in hex, UseBanana: if set to "true", use bananaphone to perform syscall | By default it patch etw to its "normal state"|
 | selfdelete     | Delete the current binary during runtime | None | |
 | sleep          | Sleep during a fixed amount of time in seconds. | Delay: the amount of time to sleep, default is 5s | |
+| createmutex    | Create a mutex with a specific name. | MutexName: the name of the mutex, default is "UruMutex" | |
+
 
 
 ### Injectors

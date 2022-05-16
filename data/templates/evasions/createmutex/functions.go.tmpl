@@ -1,0 +1,20 @@
+func createMutex(mutexName string) (uintptr,error) {
+	kernel32 := syscall.NewLazyDLL(string([]byte{'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l'}))
+	procCreateMutex := kernel32.NewProc(string([]byte{'C','r','e','a','t','e','M','u','t','e','x','W'}))
+
+	ret, _, err := procCreateMutex.Call(
+        0,
+        0,
+        uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(mutexName))),
+    )
+
+	if err != nil && err != syscall.Errno(0){
+		return ret, err
+	}
+	
+	{{if .Debug}}
+	printDebug("info","Mutex {{ .MutexName }} created !")
+	{{end}}
+	
+	return ret, nil
+}

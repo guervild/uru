@@ -85,6 +85,7 @@ func listEvasions() map[string]string {
 		"patchamsi",
 		"patchetw",
 		"patch",
+		"createmutex",
 	}
 
 	for _, v := range evasions {

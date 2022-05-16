@@ -42,5 +42,9 @@ func GetEvasion(evasionType string) (models.ObjectModel, error) {
 		return NewPatchAmsiEvasion(), nil
 	}
 
+	if evasionType == "createmutex" {
+		return NewCreateMutexEvasion(), nil
+	}
+
 	return nil, fmt.Errorf("Wrong evasion type passed: evasion %s is unknown", evasionType)
 }

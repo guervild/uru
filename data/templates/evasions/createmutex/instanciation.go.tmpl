@@ -1,0 +1,8 @@
+_, errCreateMutex := createMutex("{{ .MutexName }}")
+
+if errCreateMutex != nil {
+	{{if .Debug}}
+	printDebug("error","Error while creating mutex {{ .MutexName }}: %s", errCreateMutex)
+	{{end}}
+    return
+}
