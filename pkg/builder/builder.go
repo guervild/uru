@@ -20,7 +20,7 @@ import (
 	"github.com/guervild/uru/pkg/models"
 	"github.com/guervild/uru/pkg/tampering"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type Builder struct {
