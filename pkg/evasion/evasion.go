@@ -46,5 +46,10 @@ func GetEvasion(evasionType string) (models.ObjectModel, error) {
 		return NewCreateMutexEvasion(), nil
 	}
 
+	
+	if evasionType == "refreshdll" {
+		return NewRefreshDllEvasion(), nil
+	}
+
 	return nil, fmt.Errorf("Wrong evasion type passed: evasion %s is unknown", evasionType)
 }
