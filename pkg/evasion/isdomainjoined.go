@@ -10,11 +10,13 @@ import (
 type IsDomainJoinedEvasion struct {
 	Name        string
 	Description string
+	Debug       bool
 }
 
 func NewIsDomainJoinedEvasion() models.ObjectModel {
 	return &IsDomainJoinedEvasion{
 		Name:        "IsDomainJoined",
+		Debug:       false,
 		Description: "check if current computer is joined to a domain.",
 	}
 }
