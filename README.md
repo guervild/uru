@@ -153,6 +153,22 @@ Global options correspond to the required/optional options of the generated payl
 | append      | Append the provided string at the end of the payload file. Must be hexadecimal ex: 90909090 | no |
 | prepend     | Prepend the payload file with the provided string. Must be hexadecimal ex: 90909090 | no |
 
+#### Uru as a binary service
+
+You can use uru as a binary service, thanks to this [service package](github.com/kardianos/service).
+To implement a service, you need to use the following options in your config file, under the payload section:
+```
+ serviceOptions:
+   serviceName: YourServiceName
+   serviceDisplayName: YourServiceDisplayName
+   serviceDescription: YourServiceDesc
+```
+
+This might be useful to run uru for lateral movement.
+**Note:**
+- if your try to use a binary which is not a service during a service execution (without cmd /c), you might have the following error: `FAILED 1053: The executable program that this service is configured to run in does not implement the service.`
+- if you try to use a binary that don't implement the service you are running under, you might have the following error: `FAILED 1083: The executable program that this service is configured to run in does not implement the service.` You need to use at least `serviceName` uru argument to avoir that error.
+
 ### Encoders
 
 Encoder are responsible of the payload encoding. Encoding will be process during the payload generation. Then, the opposite actions will be added to generated code.
@@ -203,8 +219,6 @@ Evasions are the modules that help you to evade AV/EDR:
 | sleep          | Sleep during a fixed amount of time in seconds. | Delay: the amount of time to sleep, default is 5s | |
 | createmutex    | Create a mutex with a specific name. | MutexName: the name of the mutex, default is "UruMutex" | |
 | refreshdll     | Refresh the given dll to remove hook by using the dll on disk. (Inspired by sliver/scarecrow and TimWhitez works). | UseBanana: UseBananaPhone to perform syscall. Default is "false", DllName: Name of the dll to refresh. Default is "C:\\\\Windows\\\\System32\\\\kernel32.dll". | Only work if windows version is "10.0" |
-
-
 
 ### Injectors
 

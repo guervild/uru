@@ -24,16 +24,20 @@ import (
 )
 
 type Builder struct {
-	Type          string
-	Args          string
-	ShellcodeData string
-	Imports       []string
-	InstancesCode []string
-	FunctionsCode []string
-	DebugInstance string
-	DebugFunction string
-	IsDLL         bool
-	ExportNames   string
+	Type               string
+	Args               string
+	ShellcodeData      string
+	Imports            []string
+	InstancesCode      []string
+	FunctionsCode      []string
+	DebugInstance      string
+	DebugFunction      string
+	IsDLL              bool
+	IsService          bool
+	ExportNames        string
+	ServiceName   	   string
+	ServiceDisplayName string
+	ServiceDescription string
 }
 
 type GoMod struct {
@@ -65,6 +69,12 @@ type LimeLighterArgs struct {
 	Password string `yaml:"password"`
 }
 
+type ServiceOptions struct {
+	ServiceName   	   string `yaml:"serviceName"`
+	ServiceDisplayName string `yaml:"serviceDisplayName"`
+	ServiceDescription string `yaml:"serviceDescription"`
+}
+
 type Payload struct {
 	Arch               string          `yaml:"arch,omitempty"`
 	Debug              bool            `yaml:"debug"`
@@ -76,6 +86,7 @@ type Payload struct {
 	Prepend            string          `yaml:"prepend"`
 	FilePropertiesPath string          `yaml:"file_properties_path"`
 	LimeLighterArgs    LimeLighterArgs `yaml:"limelighter"`
+	ServiceOptions     ServiceOptions  `yaml:"serviceOptions"`
 }
 
 func NewPayloadConfigFromFile(data []byte) (PayloadConfig, error) {
@@ -107,6 +118,9 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 	var encodersStringArray []string
 	var alreadyAddedArtifact []string
 	var debug bool
+	var serviceName string
+	var serviceDisplayName string
+	var serviceDescription string
 
 	payloadData := payload
 
@@ -120,6 +134,7 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 	var extension string
 	var buildmode string
 	isDLL := false
+	isService := false
 
 	switch strings.ToLower(payloadConfig.Payload.Type) {
 	case "exe":
@@ -128,6 +143,12 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 		extension = "dll"
 		buildmode = "c-shared"
 		isDLL = true
+	case "svc":
+		extension = "exe"
+		isService = true
+		serviceName = payloadConfig.Payload.ServiceOptions.ServiceName
+		serviceDisplayName = payloadConfig.Payload.ServiceOptions.ServiceDisplayName
+		serviceDescription = payloadConfig.Payload.ServiceOptions.ServiceDescription
 	case "cpl":
 		extension = "cpl"
 		buildmode = "c-shared"
@@ -140,7 +161,7 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 		extension = "exe"
 		buildmode = "pie"
 	default:
-		return "", nil, fmt.Errorf("Type must be exe, dll, cpl, xll, or pie.")
+		return "", nil, fmt.Errorf("Type must be exe, dll, svc, cpl, xll, or pie.")
 	}
 
 	exportNames := common.GetExportNames(extension)
@@ -343,14 +364,18 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 
 	//Build builder struct to pass to the template
 	templateData := &Builder{
-		ShellcodeData: common.GetGolangByteArray(payloadData),
-		Imports:       imports,
-		InstancesCode: instancesCode,
-		FunctionsCode: functionsCode,
-		DebugInstance: debugInstance,
-		DebugFunction: debugFunction,
-		IsDLL:         isDLL,
-		ExportNames:   exportNames,
+		ShellcodeData:      common.GetGolangByteArray(payloadData),
+		Imports:            imports,
+		InstancesCode:      instancesCode,
+		FunctionsCode:      functionsCode,
+		DebugInstance:      debugInstance,
+		DebugFunction:      debugFunction,
+		IsDLL:              isDLL,
+		IsService:          isService,
+		ExportNames:        exportNames,
+		ServiceName:        serviceName,
+		ServiceDisplayName: serviceDisplayName,
+		ServiceDescription: serviceDescription,
 	}
 
 	tempFileBase := fmt.Sprintf("out_%s", currRandom)

@@ -2,6 +2,8 @@ package main
 
 {{if .IsDLL}}
 import "C"
+{{else if .IsService}}
+import "github.com/kardianos/service"
 {{end}}
 
 import(
@@ -9,6 +11,22 @@ import(
     {{.}}
 {{end}}
 )
+
+{{if .IsService}}
+type program struct {
+}
+
+func (p *program) Stop(s service.Service) error {
+	return nil
+}
+
+func (p *program) Start(s service.Service) error {
+
+	go start()
+
+    return nil
+}
+{{end}}
 
 {{.DebugInstance}}
 {{.DebugFunction}}
@@ -25,6 +43,24 @@ func main(){}
 //export Start
 func Start(){
 
+{{else if .IsService}}
+func main() {
+    svcConfig := &service.Config{
+        Name:        "{{.ServiceName}}",
+        DisplayName: "{{.ServiceDisplayName}}",
+        Description: "{{.ServiceDescription}}",
+    }
+    
+    prg := &program{}
+    s, err := service.New(prg, svcConfig)
+    if err != nil {
+        return
+    }
+
+    err = s.Run()
+}
+
+func start(){
 {{else}}
 func main(){
 {{end}}
@@ -33,5 +69,4 @@ func main(){
 {{range .InstancesCode}} 
     {{.}}
 {{end}}
-
 }

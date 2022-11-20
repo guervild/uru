@@ -36,3 +36,7 @@ payload:
   #file_properties_path: ./main.json
   #limelighter:
   #  domain: mydomain.com
+  #serviceOptions:
+  #  serviceName: YourServiceName
+  #  serviceDisplayName: YourServiceDisplayName
+  #  serviceDescription: YourServiceDesc
