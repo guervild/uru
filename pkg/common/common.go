@@ -39,12 +39,20 @@ func CommonRendering(data embed.FS, pathtorender string, i interface{}) (string,
 	return tplBuffer.String(), nil
 }
 
-func GetGolangByteArray(data []byte) string {
+func GetGolangByteArray(data []byte, lang string) string {
 
 	var newData []string
 
-	for _, v := range data {
-		newData = append(newData, fmt.Sprintf("%d", v))
+	if lang == "go" {
+		for _, v := range data {
+			newData = append(newData, fmt.Sprintf("%d", v))
+		}
+		return fmt.Sprintf("[]byte { %s }", strings.Join(newData, ","))
+	} else if lang == "c" {
+		for _, v := range data {
+			newData = append(newData, fmt.Sprintf("\\x%x", v))
+		}
+		return fmt.Sprintf("\"%s\";", strings.Join(newData, ""))
 	}
 
 	return fmt.Sprintf("[]byte { %s }", strings.Join(newData, ","))
@@ -57,7 +65,7 @@ func CheckIfFileExists(filepath string) error {
 	return nil
 }
 
-//https://stackoverflow.com/questions/66643946/how-to-remove-duplicates-strings-or-int-from-slice-in-go
+// https://stackoverflow.com/questions/66643946/how-to-remove-duplicates-strings-or-int-from-slice-in-go
 func RemoveDuplicateStr(strSlice []string) []string {
 	allKeys := make(map[string]bool)
 	list := []string{}
@@ -70,7 +78,7 @@ func RemoveDuplicateStr(strSlice []string) []string {
 	return list
 }
 
-//https://stackoverflow.com/questions/34816489/reverse-slice-of-strings
+// https://stackoverflow.com/questions/34816489/reverse-slice-of-strings
 func ReverseSlice(ss []interface{}) {
 	last := len(ss) - 1
 	for i := 0; i < len(ss)/2; i++ {
@@ -96,83 +104,6 @@ func ContainsStringInSliceIgnoreCase(s []string, toFind string) bool {
 	return false
 }
 
-/////DEBUG
-//Inspired by https://github.com/optiv/ScareCrow/blob/8809d4544f12e7080138fa3747be3bd080616304/Loader/Loader.go#L575
-func GetDebugInstance() string {
-	return `var (
-	debugWriter io.Writer
-)`
-}
-
-func GetDebugFunction() string {
-	return `func printDebug(t, format string, v ...interface{}) {
-		debugWriter = os.Stdout
-		var output string 
-		switch t {
-		case "info":
-			output = "[INFO]    "
-		case "warning":
-			output = "[WARNING] "
-		case "error":
-			output = "[ERROR]   "
-		case "debug":
-			output = "[DEBUG]   "
-		}
-		output += format +"\n"
-		fmt.Fprintf(debugWriter, output, v...)
-	}`
-}
-
-//Reserve to Debug
-func GetDebugImports() []string {
-
-	return []string{
-		`"io"`,
-		`"os"`,
-		`"fmt"`,
-	}
-}
-
-////END DEBUG
-
-func GetExportNames(extension string) string {
-	if extension == "cpl" {
-		return `
-		//export CPlApplet
-		func CPlApplet() {
-			Start()
-		}`
-	}
-
-	if extension == "dll" {
-		return `
-		//export DllRegisterServer
-		func DllRegisterServer() {
-			Start()
-		}
-		
-		//export DllGetClassObject
-		func DllGetClassObject() {
-			Start()
-		}
-		
-		//export DllUnregisterServer
-		func DllUnregisterServer() {
-			Start()
-		}`
-	}
-
-	if extension == "xll" {
-		return `
-		//export xlAutoOpen
-		func xlAutoOpen() {
-			Start()
-		}`
-	}
-
-	return ""
-}
-
 func HasField(v interface{}, name string) bool {
 	name = strings.ToLower(name)
 
@@ -192,7 +123,7 @@ func GetField(v interface{}, field string) string {
 	return f.String()
 }
 
-//https://stackoverflow.com/questions/44255344/using-reflection-setstring/44255582
+// https://stackoverflow.com/questions/44255344/using-reflection-setstring/44255582
 func SetField(source interface{}, fieldName string, fieldValue string) {
 	v := reflect.ValueOf(source).Elem()
 
@@ -244,7 +175,7 @@ func GetCurrentDate() string {
 	return t.Format(layout)
 }
 
-//TOD: Rework that function
+// TOD: Rework that function
 func CreatePayloadFile(name, ext, source string) (*os.File, error) {
 
 	var path string
@@ -253,7 +184,7 @@ func CreatePayloadFile(name, ext, source string) (*os.File, error) {
 	extension := ext
 
 	if extension == "" {
-		extension = "go"
+		return nil, fmt.Errorf("Unsupported/unspecified language\n")
 	}
 
 	if name == "" || len(name) == 0 {
@@ -299,19 +230,40 @@ func RemoveExt(filename string) string {
 	return filename
 }
 
-func GetProperGolangArch(arch string) (string, error) {
+func GetProperArch(arch string, lang string) (string, error) {
 
-	if arch == "x64" {
-		return "amd64", nil
-	} else if arch == "x86" {
-		return "386", nil
+	switch lang {
+	case "go":
+		if arch == "x64" {
+			return "amd64", nil
+		} else if arch == "x86" {
+			return "386", nil
+		}
+	case "c":
+		if arch == "x64" {
+			return "x64", nil
+		}
+	case "rust":
+		//
 	}
 
-	return "", fmt.Errorf("Arch value must either x86 either x64.")
+	return "", fmt.Errorf("golang arch value must either x86 either x64.")
+}
+
+func GetCoreFile(lang string) (string, error) {
+	switch lang {
+	case "go":
+		return "templates/go/core.go.tmpl", nil
+	case "c":
+		return "templates/c/core.c.tmpl", nil
+	case "rust":
+		return "", nil
+	}
+	return "", fmt.Errorf("golang, rust and c are the only supported languages")
 }
 
 func GetEnglishWords() []string {
-	rawEnglish, err := data.GetTemplates().ReadFile("templates/common/english.txt")
+	rawEnglish, err := data.GetTemplates().ReadFile("templates/go/common/english.txt")
 	if err != nil {
 		return []string{}
 	}

