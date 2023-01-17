@@ -77,8 +77,6 @@ func createListOfModules(module string, langType string) []string {
 	if err != nil {
 		logger.Logger.Fatal().Msg(err.Error())
 	}
-	print(strings.Join(lst, "\n"))
-
 	return lst
 }
 
