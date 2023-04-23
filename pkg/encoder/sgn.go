@@ -1,4 +1,4 @@
-package _go
+package encoder
 
 //[SGN] - DECOMMENT TO USE SGN
 /*

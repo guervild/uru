@@ -3,19 +3,19 @@ package cmd
 import (
 	"fmt"
 	"io/fs"
-	"path/filepath"
 	"strings"
+	"path/filepath"
 
 	"github.com/guervild/uru/pkg/common"
 	"github.com/guervild/uru/pkg/encoder"
 	"github.com/guervild/uru/pkg/evasion"
 	"github.com/guervild/uru/pkg/injector"
 	"github.com/guervild/uru/pkg/logger"
+	"github.com/guervild/uru/data"
 
 	"github.com/spf13/cobra"
 )
 
-var pkg_path = "./pkg/"
 
 var listCmd = &cobra.Command{
 	Use:   "list",
@@ -31,46 +31,58 @@ func init() {
 
 func List(cmd *cobra.Command, args []string) {
 
-	// arg[0] = lang
-	//  arg[1] = evasion, encoder etc.
-	switch strings.ToLower(args[1]) {
+
+	if strings.ToLower(args[0]) != "options" {
+		if len(args) != 2 { 
+			fmt.Println("Need a second argument 'go' or 'c'")
+			return
+		}
+
+		if strings.ToLower(args[1]) != "go" &&  strings.ToLower(args[1]) != "c" {
+			fmt.Println("Language must be'go' or 'c'")
+			return
+		}
+	}
+
+	switch strings.ToLower(args[0]) {
 	case "encoders":
-		printValue("Encoders", listEncoders(strings.ToLower(args[0])))
+		printValue("Encoders", listEncoders(strings.ToLower(args[1])))
 	case "evasions":
-		printValue("Evasions", listEvasions(strings.ToLower(args[0])))
+		printValue("Evasions", listEvasions(strings.ToLower(args[1])))
 	case "injectors":
-		printValue("Injectors", listInjectors(strings.ToLower(args[0])))
+		printValue("Injectors", listInjectors(strings.ToLower(args[1])))
 	case "options":
 		printValue("Options", getOptions())
 
 	default:
-		fmt.Println("Argument must be encoders, evasions, injectors or options.")
+		fmt.Println("Argument must be encoders, evasions, injectors or options. For encoders, evasions and injectors, a second argument can be passed 'go' or 'c'.")
 	}
 }
 
 func createListOfModules(module string, langType string) []string {
 
-	// path to encoder go files (specified by lang)
-	var dirPath = pkg_path + module + langType
+	dataTmpl := data.GetTemplates()
+	pathLang := filepath.Join("./templates", langType)
+	pathModule := filepath.Join(pathLang, module)
 
 	var lst = make([]string, 0)
 
-	err := filepath.Walk(dirPath,
-		func(path string, info fs.FileInfo, err error) error {
-
+	err := fs.WalkDir(dataTmpl, pathModule,
+		 func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				return err
+				logger.Logger.Fatal().Msg(err.Error())
 			}
-			if !info.IsDir() {
-				//string will be like:pkg/injector/c/basicInjector_executeFP.go
 
-				// get rid of exstension
-				currStr := strings.Split(path, ".go")[0]
-
-				// get rid of pkg/[module]/[lang]
-				currStr = strings.Split(currStr, "pkg/"+module+langType+"/")[1]
-				lst = append(lst, currStr)
+			if d.IsDir() {
+				if strings.ToLower(d.Name()) != "commons" && strings.ToLower(d.Name()) != strings.ToLower(module) {
+					if strings.ToLower(module) == "injector" {
+						lst = append(lst, path)
+					} else {
+						lst = append(lst, d.Name())
+					}
+				}
 			}
+
 			return nil
 		})
 
@@ -84,7 +96,7 @@ func listEncoders(langType string) map[string]string {
 
 	mEncoders := make(map[string]string)
 
-	encoders := createListOfModules("encoder/", langType)
+	encoders := createListOfModules("encoders", langType)
 
 	for _, v := range encoders {
 
@@ -105,7 +117,7 @@ func listEncoders(langType string) map[string]string {
 func listEvasions(langType string) map[string]string {
 	mEvasions := make(map[string]string)
 
-	evasions := createListOfModules("evasion/", langType)
+	evasions := createListOfModules("evasions", langType)
 
 	for _, v := range evasions {
 
@@ -125,11 +137,14 @@ func listEvasions(langType string) map[string]string {
 func listInjectors(langType string) map[string]string {
 	mInjectors := make(map[string]string)
 
-	injectors := createListOfModules("injector/", langType)
+	injectors := createListOfModules("injector", langType)
 
 	for _, v := range injectors {
+		path := strings.ReplaceAll(v, fmt.Sprintf("templates/%s/injector/", langType), "")
+		//path = strings.ReplaceAll(path, "local/", "")
+		//path = strings.ReplaceAll(path, "-", "")
 
-		injectorValue, err := injector.GetInjector(strings.ToLower(v), langType)
+		injectorValue, err := injector.GetInjector(strings.ToLower(path), langType)
 		if err != nil {
 			logger.Logger.Info().Msg(err.Error())
 		} else {

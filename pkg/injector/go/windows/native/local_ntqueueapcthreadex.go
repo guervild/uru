@@ -1,4 +1,4 @@
-package bananaphone
+package native
 
 import (
 	"embed"
@@ -15,8 +15,8 @@ type NtQueueApcThreadExLocal struct {
 
 func NewNtQueueApcThreadExLocal() models.ObjectModel {
 	return &NtQueueApcThreadExLocal{
-		Name:        "windows/bananaphone/local/NtQueueApcThreadEx-Local",
-		Description: "Use native windows api call NtQueueApcThreadExt to inject in the current process. Call is performed using bananaphone from @C-Sto.",
+		Name:        "windows/native/local/ntqueueapcthreadex",
+		Description: "Use native windows api call NtQueueApcThreadEx to inject in the current process",
 		Debug:       false,
 	}
 }
@@ -26,17 +26,16 @@ func (i *NtQueueApcThreadExLocal) GetImports() []string {
 	return []string{
 		`"syscall"`,
 		`"unsafe"`,
-		`bananaphone "github.com/C-Sto/BananaPhone/pkg/BananaPhone"`,
 		`"golang.org/x/sys/windows"`,
 	}
 }
 
 func (e *NtQueueApcThreadExLocal) RenderInstanciationCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/NtQueueApcThreadEx-Local/instanciation.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/injector/windows/native/local/NtQueueApcThreadEx-Local/instanciation.go.tmpl", e)
 }
 
 func (e *NtQueueApcThreadExLocal) RenderFunctionCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/NtQueueApcThreadEx-Local/functions.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/injector/windows/native/local/NtQueueApcThreadEx-Local/functions.go.tmpl", e)
 }

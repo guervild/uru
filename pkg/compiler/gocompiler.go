@@ -36,7 +36,10 @@ type GoConfig struct {
 }
 
 func (g *GoConfig) GetExportNames(extension string) string {
-	if extension == "cpl" {
+
+	lowerExtension := strings.ToLower(extension)
+
+	if lowerExtension == "cpl" {
 		return `
 		//export CPlApplet
 		func CPlApplet() {
@@ -44,7 +47,7 @@ func (g *GoConfig) GetExportNames(extension string) string {
 		}`
 	}
 
-	if extension == "dll" {
+	if lowerExtension == "dll" {
 		return `
 		//export DllRegisterServer
 		func DllRegisterServer() {
@@ -62,7 +65,7 @@ func (g *GoConfig) GetExportNames(extension string) string {
 		}`
 	}
 
-	if extension == "xll" {
+	if lowerExtension == "xll" {
 		return `
 		//export xlAutoOpen
 		func xlAutoOpen() {
@@ -264,7 +267,7 @@ func (g *GoConfig) GetGarbleArgs(command []string) []string {
 // IsTypeSupported retrieves build info based on type of executable
 func (g *GoConfig) IsTypeSupported(t string) (string, string, error) {
 
-	switch t {
+	switch strings.ToLower(t) {
 	case "exe":
 		return "exe", "", nil
 	case "dll":

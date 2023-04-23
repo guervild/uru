@@ -2,6 +2,11 @@ package compiler
 
 import (
 	"embed"
+	"fmt"
+	"strings"
+	"os/exec"
+
+	"github.com/guervild/uru/pkg/common"
 )
 
 type compiler interface {
@@ -32,19 +37,52 @@ var supportedLangs = []string{
 }
 
 // GetEmptyCompiler retrieve correct compiler based on language
-func GetEmptyCompiler(lang string) compiler {
+func GetEmptyCompiler(lang string) (compiler, error) {
 
-	switch lang {
+	switch strings.ToLower(lang) {
 	case "go":
-		return NewEmptyGoConfig()
+		return NewEmptyGoConfig(), nil
 	case "c":
-		return NewEmptyCConfig()
+		return NewEmptyCConfig(), nil
 	default:
-		return nil
 	}
-	return nil
+
+	return nil, fmt.Errorf("Error ... Language is not supported yet")
 }
 
 func GetSupportedLangs(lang string) bool {
-	return contains(supportedLangs, lang)
+	return common.ContainsStringInSliceIgnoreCase(supportedLangs, strings.ToLower(lang))
+}
+
+func IsTargetCompilerInstalled(target string) (string, error) {
+	return exec.LookPath(target)
+}
+
+
+func GetProperArch(arch string, lang string) (string, error) {
+
+	switch lang {
+	case "go":
+		if arch == "x64" {
+			return "amd64", nil
+		} else if arch == "x86" {
+			return "386", nil
+		}
+	case "c":
+		if arch == "x64" {
+			return "x64", nil
+		}
+	}
+
+	return "", fmt.Errorf("Arch value must either x86 either x64.")
+}
+
+func GetCoreFile(lang string) (string, error) {
+	switch lang {
+	case "go":
+		return "templates/go/core.go.tmpl", nil
+	case "c":
+		return "templates/c/core.c.tmpl", nil
+	}
+	return "", fmt.Errorf("golang and c are the only supported languages")
 }

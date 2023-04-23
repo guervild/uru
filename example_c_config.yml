@@ -5,14 +5,15 @@ payload:
       args:
         - name: Key
           value: "AAAAAAAAAAAAAAAA"
-    - name: basicinjector_executefp
-      type: injector
     - name: sleep
       type: evasion
+      args:
+        - name: Delay
+          value: "5"
+    - name: windows/native/local/execute_fp
+      type: injector
   #sgn: false #must be decommented in the code to be used
   lang: c
   type: exe
   arch: x64
   debug: true
-  outname: "mal"
-

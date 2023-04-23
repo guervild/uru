@@ -39,7 +39,7 @@ func CommonRendering(data embed.FS, pathtorender string, i interface{}) (string,
 	return tplBuffer.String(), nil
 }
 
-func GetGolangByteArray(data []byte, lang string) string {
+func GetLanguageByteArray(data []byte, lang string) string {
 
 	var newData []string
 
@@ -230,40 +230,8 @@ func RemoveExt(filename string) string {
 	return filename
 }
 
-func GetProperArch(arch string, lang string) (string, error) {
-
-	switch lang {
-	case "go":
-		if arch == "x64" {
-			return "amd64", nil
-		} else if arch == "x86" {
-			return "386", nil
-		}
-	case "c":
-		if arch == "x64" {
-			return "x64", nil
-		}
-	case "rust":
-		//
-	}
-
-	return "", fmt.Errorf("golang arch value must either x86 either x64.")
-}
-
-func GetCoreFile(lang string) (string, error) {
-	switch lang {
-	case "go":
-		return "templates/go/core.go.tmpl", nil
-	case "c":
-		return "templates/c/core.c.tmpl", nil
-	case "rust":
-		return "", nil
-	}
-	return "", fmt.Errorf("golang, rust and c are the only supported languages")
-}
-
 func GetEnglishWords() []string {
-	rawEnglish, err := data.GetTemplates().ReadFile("templates/go/common/english.txt")
+	rawEnglish, err := data.GetTemplates().ReadFile("templates/common/english.txt")
 	if err != nil {
 		return []string{}
 	}

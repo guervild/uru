@@ -16,7 +16,7 @@ type NinjaUUID struct {
 
 func NewNinjaUUID() models.ObjectModel {
 	return &NinjaUUID{
-		Name:        "windows/bananaphone/local/ninjauuid",
+		Name:        "windows/bananaphone/local/ninja_uuid",
 		Description: "[experimental/dev] Module stomping following EnumSystemLocalesA for injection. Injection taken from @boku7 project. uuid encoder must be used as your last encoder.",
 		Debug:       false,
 		Library:     "C:\\\\windows\\\\system32\\\\windows.storage.dll",

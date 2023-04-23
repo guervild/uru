@@ -1,19 +1,6 @@
 package builder
 
 import (
-	"encoding/hex"
-	"fmt"
-	"github.com/guervild/uru/data"
-	"github.com/guervild/uru/pkg/common"
-	"github.com/guervild/uru/pkg/compiler"
-	"github.com/guervild/uru/pkg/encoder"
-	"github.com/guervild/uru/pkg/encoder/go"
-	"github.com/guervild/uru/pkg/evasion"
-	"github.com/guervild/uru/pkg/injector"
-	"github.com/guervild/uru/pkg/logger"
-	"github.com/guervild/uru/pkg/models"
-	"github.com/guervild/uru/pkg/tampering"
-	"gopkg.in/yaml.v2"
 	"os"
 	"path"
 	"path/filepath"
@@ -21,6 +8,20 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"encoding/hex"
+	"fmt"
+
+	"github.com/guervild/uru/data"
+	"github.com/guervild/uru/pkg/common"
+	"github.com/guervild/uru/pkg/compiler"
+	"github.com/guervild/uru/pkg/encoder"
+	"github.com/guervild/uru/pkg/evasion"
+	"github.com/guervild/uru/pkg/injector"
+	"github.com/guervild/uru/pkg/logger"
+	"github.com/guervild/uru/pkg/models"
+	"github.com/guervild/uru/pkg/tampering"
+
+	"gopkg.in/yaml.v2"
 )
 
 type Builder struct {
@@ -70,7 +71,6 @@ type Payload struct {
 	Prepend            string          `yaml:"prepend"`
 	FilePropertiesPath string          `yaml:"file_properties_path"`
 	LimeLighterArgs    LimeLighterArgs `yaml:"limelighter"`
-	OutFileName        string          `yaml:"outname"`
 }
 
 func NewPayloadConfigFromFile(data []byte) (PayloadConfig, error) {
@@ -110,12 +110,13 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 	if err != nil {
 		return "", nil, err
 	}
+
 	logger.Logger.Info().Str("output_directory", dirPath).Msg("Create the output directory")
 
 	payloadData := payload
 
 	//Process contents
-	arch, err := common.GetProperArch(payloadConfig.Payload.Arch, payloadConfig.Payload.Lang)
+	arch, err := compiler.GetProperArch(payloadConfig.Payload.Arch, payloadConfig.Payload.Lang)
 	if err != nil {
 		return "", nil, err
 	}
@@ -126,7 +127,10 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 	isDLL := false
 
 	// create compiler object
-	thisCompiler := compiler.GetEmptyCompiler(payloadConfig.Payload.Lang)
+	thisCompiler, err := compiler.GetEmptyCompiler(payloadConfig.Payload.Lang)
+	if err != nil {
+		return "", nil, err
+	}
 
 	// get build info for specific compiler, verify config is supported (dll, exe etc.)
 	extension, buildmode, err = thisCompiler.IsTypeSupported(payloadConfig.Payload.Type)
@@ -146,7 +150,6 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		imports = append(imports, thisCompiler.GetDebugImports()...)
 	}
 
-	//todo check if anything needs to change for c (and parts below)
 	if godonut == true && srdi == true {
 		return "", nil, fmt.Errorf("donut and srdi can't be passed together. Choose only one between the two arguments")
 	}
@@ -154,7 +157,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 	if godonut {
 		logger.Logger.Info().Bool("donut", godonut).Msg("Payload is an executable, will use go-donut...")
 
-		shellcode, err := _go.ConvertToGoDonutShellcode(payloadData, filepath.Ext(filename), class, functionName, parameters)
+		shellcode, err := encoder.ConvertToGoDonutShellcode(payloadData, filepath.Ext(filename), class, functionName, parameters)
 		if err != nil {
 			return "", nil, err
 		}
@@ -164,7 +167,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 
 	if srdi {
 		logger.Logger.Info().Bool("srdi", srdi).Bool("clearHeader", clearHeader).Str("functionName", functionName).Str("parameters", parameters).Msg("Payload will be converted to srdi shellcode")
-		payloadData = _go.ConvertToSRDIShellcode(payloadData, functionName, parameters, clearHeader)
+		payloadData = encoder.ConvertToSRDIShellcode(payloadData, functionName, parameters, clearHeader)
 	}
 
 	//[SGN] - DECOMMENT TO USE SGN
@@ -279,7 +282,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 			instancesCode = append(instancesCode, iCode)
 		}
 
-		// If it is already added, we dont to add the function code again
+		// If it is already added, we dont need to add the function code again
 		if len(fCode) > 0 && !common.ContainsStringInSliceIgnoreCase(alreadyAddedArtifact, artifactName) {
 			functionsCode = append(functionsCode, fCode)
 		}
@@ -302,7 +305,6 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		e := encodersStringArray[i]
 		artifactValue := encodersArray[i]
 
-		//fmt.Printf("raw shellcode\t%v", tmpPayloadData)
 		logger.Logger.Info().Int("size", len(tmpPayloadData)).Msgf("Payload size before %s", e)
 
 		if err != nil {
@@ -333,7 +335,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 	logger.Logger.Info().Int("size", len(payloadData)).Msg("Payload size after encoding")
 
 	var coreFile string
-	coreFile, err = common.GetCoreFile(payloadConfig.Payload.Lang)
+	coreFile, err = compiler.GetCoreFile(payloadConfig.Payload.Lang)
 	if err != nil {
 		return "", nil, err
 	}
@@ -351,7 +353,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 
 	//Build builder struct to pass to the template
 	templateData := &Builder{
-		ShellcodeData: common.GetGolangByteArray(payloadData, payloadConfig.Payload.Lang),
+		ShellcodeData: common.GetLanguageByteArray(payloadData, payloadConfig.Payload.Lang),
 		ShellcodeLen:  strconv.Itoa(len(payloadData)),
 		Imports:       imports,
 		InstancesCode: instancesCode,
@@ -396,32 +398,20 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 	}
 	srcFilePath, _ := filepath.Abs(file.Name())
 
-	if payloadConfig.Payload.OutFileName == "" {
+	//if payloadConfig.Payload.OutFileName == "" {
 		// keep random bin file name, add out extension
 		binFile, _ = filepath.Abs(fmt.Sprintf("%s.%s", common.RemoveExt(file.Name()), extension))
-	} else {
-		// get out file path, strip the random name, add the user specified name and extsenion
-		binFile, _ = filepath.Abs(fmt.Sprintf("%s/%s.%s", filepath.Dir(file.Name()), payloadConfig.Payload.OutFileName, extension))
-	}
+	//} else {
+	//	// get out file path, strip the random name, add the user specified name and extsenion
+	//	binFile, _ = filepath.Abs(fmt.Sprintf("%s/%s.%s", filepath.Dir(file.Name()), payloadConfig.Payload.OutFileName, extension))
+	//}
 
 	// build, report errors
 	_, err = thisCompiler.Build(srcFilePath, binFile)
 	if err != nil {
 		return "", nil, err
 	}
-
-	/*TODO FIXME keep
-	/*
-		//If not keep, clean
-		if !keep {
-			err := os.RemoveAll(dirPath)
-			if err != nil {
-				return "", nil, err
-			}
-			//log.Println("Cleaning", dirPath)
-		}
-	*/
-
+	
 	// compute hashes
 	fileContent, err := os.ReadFile(binFile)
 	if err != nil {

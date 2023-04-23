@@ -31,7 +31,7 @@ func GetEvasion(evasionType string, langType string) (models.ObjectModel, error)
 			return _go.NewNtSleepEvasion(), nil
 		}
 
-		if evasionType == "english-words" {
+		if evasionType == "english_words" {
 			return _go.NewEnglishWordsEvasion(), nil
 		}
 
@@ -70,5 +70,5 @@ func GetEvasion(evasionType string, langType string) (models.ObjectModel, error)
 	case "rust":
 		return nil, fmt.Errorf("Wrong evasion type passed: evasion %s is unknown", evasionType)
 	}
-	return nil, fmt.Errorf("Wrong evasion type passed: evasion %s is unknown", evasionType)
+	return nil, fmt.Errorf("Wrong langtype: %s is unknown", langType)
 }

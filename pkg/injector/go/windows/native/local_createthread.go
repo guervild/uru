@@ -15,7 +15,7 @@ type CreateThreadNative struct {
 
 func NewCreateThreadNative() models.ObjectModel {
 	return &CreateThreadNative{
-		Name:        "windows/native/local/CreateThreadNative",
+		Name:        "windows/native/local/createthread",
 		Description: "Use native windows api call CreateThread to inject into the current process.",
 		Debug:       false,
 	}

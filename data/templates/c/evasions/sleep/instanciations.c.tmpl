@@ -1,5 +1,5 @@
     {{if .Debug}}
-    printf("Sleeping for %d milliseconds", {{ .Delay }} );
+    printf("[*] Sleeping for %d milliseconds\n", {{ .Delay }} );
     {{end}}
 
     Sleep({{ .Delay }});

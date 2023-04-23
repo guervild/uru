@@ -7,7 +7,7 @@ payload:
           value: "0"
     - name: patchetw
       type: evasion
-    - name: english-words
+    - name: english_words
       type: evasion
       args:
         - name: NumberOfWord
@@ -21,15 +21,15 @@ payload:
       type: encoder
     - name: zip
       type: encoder
-    - name: reverse-order
+    - name: reverse_order
       type: encoder
-    - name: windows/native/syscall
+    - name: windows/native/local/execute_fp
       type: injector
   #sgn: false #must be decommented in the code to be used
   lang: go
   type: exe
   arch: x64
-  debug: true
+  debug: false
   obfuscation: false #need garble to be installed
   #append: 90909090
   #prepend: 90909090

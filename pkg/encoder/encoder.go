@@ -31,7 +31,7 @@ func GetEncoder(encoderType string, langType string) (models.ObjectModel, error)
 			return _go.NewAESEncoder(), nil
 		}
 
-		if encoderType == "reverse-order" {
+		if encoderType == "reverse_order" {
 			return _go.NewReverseOrderEncoder(), nil
 		}
 
@@ -48,5 +48,5 @@ func GetEncoder(encoderType string, langType string) (models.ObjectModel, error)
 	case "rust":
 		return nil, fmt.Errorf("Wrong encoder type passed: encoder %s is unknown", encoderType)
 	}
-	return nil, fmt.Errorf("Wrong encoder type passed: encoder %s is unknown", encoderType)
+	return nil, fmt.Errorf("Wrong langtype: %s is unknown", langType)
 }

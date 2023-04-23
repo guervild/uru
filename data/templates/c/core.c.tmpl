@@ -10,13 +10,7 @@
 
 int main(){
 
-    unsigned char * ro_shellcode = {{.ShellcodeData}}
-
-    DWORD shellcodeLen = {{.ShellcodeLen}};
-
-    unsigned char * shellcode = malloc(sizeof(unsigned char) * shellcodeLen);
-
-    memcpy(shellcode, ro_shellcode, shellcodeLen);
+    unsigned char shellcode[] = {{.ShellcodeData}}
 
 {{range .InstancesCode}}
     {{.}}
