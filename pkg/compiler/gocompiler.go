@@ -188,6 +188,8 @@ func (g *GoConfig) BuildGoBuildCommand(payload, dest string) {
 		goroot = build.Default.GOROOT
 	}
 
+	homeEnv := os.Getenv("HOME")
+
 	if g.Obfuscation {
 		compilerPath = path.Join(path.Join(gopath, "bin"), "garble")
 	} else {
@@ -199,25 +201,30 @@ func (g *GoConfig) BuildGoBuildCommand(payload, dest string) {
 	logger.Logger.Debug().Str("compiler_path", g.CompilerPath).Msg("Set the compiler path")
 
 	//Getting the right env variables
-	env := []string{fmt.Sprintf("GOCACHE=%s", g.GOCACHE), fmt.Sprintf("GOPATH=%s", gopath), fmt.Sprintf("GOOS=%s", g.GOOS), fmt.Sprintf("GOARCH=%s", g.GOARCH), fmt.Sprintf("PATH=%s", os.Getenv("PATH"))}
+	env := []string{"GOPRIVATE=*", fmt.Sprintf("GOCACHE=%s", g.GOCACHE), fmt.Sprintf("GOPATH=%s", gopath), fmt.Sprintf("GOOS=%s", g.GOOS), fmt.Sprintf("GOARCH=%s", g.GOARCH), fmt.Sprintf("PATH=%s", os.Getenv("PATH"))}
+	
+	if homeEnv != "" {
+		env = append(env, fmt.Sprintf("HOME=%s", homeEnv))
+	}
+	
 	if g.Buildmode == "c-shared" {
 		env = append(env, "CGO_ENABLED=1")
 		env = append(env, "CXX=x86_64-w64-mingw32-g++")
 		env = append(env, "CC=x86_64-w64-mingw32-gcc")
 	}
-	var gogarble []string
-	if g.Obfuscation {
-		for _, v := range g.Imports {
-			var out string
-			out = strings.TrimLeft(strings.TrimRight(v, "\""), "\"")
-			if strings.Contains(out, "\"") {
-				out2 := strings.Join(strings.Split(out, "\"")[1:], "\"")
-				out = out2
-			}
-			gogarble = append(gogarble, out)
-		}
-		env = append(env, fmt.Sprintf("GOGARBLE=%s", strings.Join(gogarble, ",")))
-	}
+	// var gogarble []string
+	// if g.Obfuscation {
+	// 	for _, v := range g.Imports {
+	// 		var out string
+	// 		out = strings.TrimLeft(strings.TrimRight(v, "\""), "\"")
+	// 		if strings.Contains(out, "\"") {
+	// 			out2 := strings.Join(strings.Split(out, "\"")[1:], "\"")
+	// 			out = out2
+	// 		}
+	// 		gogarble = append(gogarble, out)
+	// 	}
+	// 	env = append(env, fmt.Sprintf("GOGARBLE=%s", strings.Join(gogarble, ",")))
+	// }
 
 	g.Env = env
 

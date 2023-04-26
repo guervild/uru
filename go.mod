@@ -1,6 +1,6 @@
 module github.com/guervild/uru
 
-go 1.17
+go 1.19
 
 require (
 	github.com/Binject/debug v0.0.0-20210312092933-6277045c2fdf
