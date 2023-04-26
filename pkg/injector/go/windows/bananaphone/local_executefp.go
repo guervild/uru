@@ -32,10 +32,10 @@ func (i *SyscallGoShellcode) GetImports() []string {
 
 func (e *SyscallGoShellcode) RenderInstanciationCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/go-shellcode-syscall/instanciation.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/execute_fp/instanciation.go.tmpl", e)
 }
 
 func (e *SyscallGoShellcode) RenderFunctionCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/go-shellcode-syscall/functions.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/execute_fp/functions.go.tmpl", e)
 }
