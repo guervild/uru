@@ -1,8 +1,8 @@
 package encoder
 
 import (
-	"io"
 	"bytes"
+	"io"
 	"strings"
 
 	"github.com/Binject/debug/pe"
@@ -19,7 +19,7 @@ func DetectDotNet(r io.ReaderAt) (bool, string) {
 	return pefile.IsManaged(), pefile.NetCLRVersion()
 }
 
-func ConvertToGoDonutShellcode(payload []byte, extension, class, method, parameters string) ([]byte, error){
+func ConvertToGoDonutShellcode(payload []byte, extension, class, method, parameters string) ([]byte, error) {
 	reader := bytes.NewReader(payload)
 	var dType donut.ModuleType
 	var runtime string
@@ -52,15 +52,15 @@ func ConvertToGoDonutShellcode(payload []byte, extension, class, method, paramet
 	case ".vbs":
 		dType = donut.DONUT_MODULE_VBS
 	}
-	
+
 	shellcode, err := donut.ShellcodeFromBytes(bytes.NewBuffer(payload), &donut.DonutConfig{
 		Arch:       donut.X84,
 		Type:       dType,
 		InstType:   donut.DONUT_INSTANCE_PIC,
 		Entropy:    donut.DONUT_ENTROPY_DEFAULT,
-		Runtime:	runtime,
-		Class: class,
-		Method: method,
+		Runtime:    runtime,
+		Class:      class,
+		Method:     method,
 		Compress:   1,
 		Format:     1,
 		Bypass:     3,

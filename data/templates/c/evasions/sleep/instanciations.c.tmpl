@@ -1,0 +1,9 @@
+    {{if .Debug}}
+    printf("[*] Sleeping for %d milliseconds\n", {{ .Delay }} );
+    {{end}}
+
+    Sleep({{ .Delay }});
+
+    {{if .Debug}}
+    printf("\t[+] Sleep complete\n");
+    {{end}}

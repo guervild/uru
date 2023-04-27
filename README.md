@@ -42,7 +42,7 @@ Flags:
   -p, --payload Shellcode/Executable   Shellcode/Executable to use in the generated payload
       --srdi                           Convert dll into a position independant code that uses a rdll loader to execute the dll entrypoint.
 ```
-`-c/--config` a config file, a example is provided, see [example_config.yml](./example_config.yml). The [Config file](#config-file) section will helps you to build your own configuration file.
+`-c/--config` a config file, a example is provided, see [example_go_config.yml](./example_go_config.yml). The [Config file](#config-file) section will helps you to build your own configuration file.
 
 `-p/--payload` the path to the payload you want to execute/inject.
 
@@ -65,6 +65,10 @@ Example:
 ./uru generate -c <pathtoconfig.yml> -p <pathtopayload> --donut
 ```
 
+**Note:** `uru` supports the following programmation languages:
+- c language: see [example_c_config.yml](./example_c_config.yml)
+- golang: see [example_go_config.yml](./example_go_config.yml)
+  
 ### Server mode
 The server mode offers the possibility to generate payload through an api call:
 ```
@@ -175,6 +179,8 @@ Encoder are responsible of the payload encoding. Encoding will be process during
 
 To encode your payload (and avoid to store it in plaintext), you can use the following "encoders":
 
+#### Golang
+
 | Name          | Description                            |
 |---------------|----------------------------------------|
 | aes           | Use AES GCM to encrypt given data      |
@@ -184,6 +190,11 @@ To encode your payload (and avoid to store it in plaintext), you can use the fol
 | zip           | Use zip compression on given data      |
 | reverse-order | Reverse the order of the shellcode byte array. |
 | uuid          | [experimental/dev] Transform data into UUID string (only works with ninjauuid injector). |
+
+#### C
+| Name          | Description                            |
+|---------------|----------------------------------------|
+| xor           | Use xor algorithm to encode given data |
 
 To use an encoder, specify the name, and the type "encoder".
 
@@ -206,6 +217,8 @@ To use an encoder, specify the name, and the type "encoder".
 
 Evasions are the modules that help you to evade AV/EDR:
 
+#### Golang
+
 |      Name      | Description | Argument(s) | Comment |
 |:--------------:|-------------|-------------|---------|
 | english-words  | Add a random number of english words to the binary. | NumberOfWord: define the number of english words to add to the binary between 1 and 1000. | Note that the words will no be obfuscated when using garble |
@@ -220,19 +233,34 @@ Evasions are the modules that help you to evade AV/EDR:
 | createmutex    | Create a mutex with a specific name. | MutexName: the name of the mutex, default is "UruMutex" | |
 | refreshdll     | Refresh the given dll to remove hook by using the dll on disk. (Inspired by sliver/scarecrow and TimWhitez works). | UseBanana: UseBananaPhone to perform syscall. Default is "false", DllName: Name of the dll to refresh. Default is "C:\\\\Windows\\\\System32\\\\kernel32.dll". | Only work if windows version is "10.0" |
 
+#### C
+
+|      Name      | Description | Argument(s) | Comment |
+|:--------------:|-------------|-------------|---------|
+| sleep          | Sleep during a fixed amount of time in milliseconds. | Delay: the amount of time to sleep, default is 5000ms | |
+| dllforward     | Forward exported functions to correct dll. |  File: Local path to file you want to impersonate, ExpectedPath: specify the files typical place on machine (including file name), if is not the same as above | |
+
 ### Injectors
 
 Injectors are the modules that defined a process injection:
 
+#### Golang
+
 | Name                                               | Description |
 |----------------------------------------------------|-------------|
-| windows/native/local/go-shellcode-syscall          | Executes Shellcode in the current running proccess by making a Syscall on the Shellcode's entry point. |
-| windows/native/local/CreateThreadNative            | Use native windows api call CreateThread to inject into the current process. |
-| windows/native/local/NtQueueApcThreadEx-Local      | Use native windows api call NtQueueApcThreadEx to inject in the current process |
-| windows/bananaphone/local/go-shellcode-syscall     | Executes Shellcode in the current running proccess by making a Syscall on the Shellcode's entry point.  |
-| windows/bananaphone/local/NtQueueApcThreadEx-Local | Use native windows api call NtQueueApcThreadExt to inject in the current process. Call is performed using bananaphone from @C-Sto. |
-| windows/bananaphone/local/ninjauuid    | [experimental/dev] Module stomping following EnumSystemLocalesA for injection. Injection taken from @boku7 project. uuid encoder must be used as your last encoder. |
+| windows/native/local/execute_fp | Executes Shellcode in the current running proccess by making a Syscall on the Shellcode's entry point. |
+| windows/native/local/createthread | Use native windows api call CreateThread to inject into the current process. |
+| windows/native/local/ntqueueapcthreadex | Use native windows api call NtQueueApcThreadEx to inject in the current process |
+| windows/bananaphone/local/execute_fp    | Executes Shellcode in the current running proccess by making a Syscall on the Shellcode's entry point.  |
+| windows/bananaphone/local/ntqueueapcthreadex | Use native windows api call NtQueueApcThreadExt to inject in the current process. Call is performed using bananaphone from @C-Sto. |
+| windows/bananaphone/local/ninja_uuid    | [experimental/dev] Module stomping following EnumSystemLocalesA for injection. Injection taken from @boku7 project. uuid encoder must be used as your last encoder. |
 
+##### C
+
+|      Name      | Description | Argument(s) | Comment |
+|:--------------:|-------------|-------------|---------|
+| windows/native/local/execute_fp | Use windows apis (virtual alloc, virtual protect, memcpy) to inject code | | |
+| windows/native/local/createthread | Use windows apis (virtual alloc, virtual protect, memcpy, CreateThread) to inject code | | |
 
 **Note:**
 - `bananaphone` injections require to install [bananaphone](https://github.com/C-Sto/BananaPhone) from @C-Sto.
@@ -310,11 +338,11 @@ func (e *PrintTestEvasion) GetImports() []string {
 }
 
 func (e *PrintTestEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-	return common.CommonRendering(data, "templates/evasions/print-test/instanciation.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/evasions/print-test/instanciation.go.tmpl", e)
 }
 
 func (e *PrintTestEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-	return common.CommonRendering(data, "templates/evasions/print-test/functions.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/evasions/print-test/functions.go.tmpl", e)
 }
 ```
 
