@@ -1,8 +1,0 @@
-errRefreshDll_{{.SubNameError}} := refreshDll("{{ .DllName }}")
-
-if errRefreshDll_{{.SubNameError}} != nil {
-	{{if .Debug}}
-	printDebug("error","Error while refreshing dll {{ .DllName }}: %s", errRefreshDll_{{.SubNameError}})
-	printDebug("error","Continue...")
-	{{end}}
-}
