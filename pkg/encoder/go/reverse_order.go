@@ -15,7 +15,7 @@ type ReverseOrderEncoder struct {
 
 func NewReverseOrderEncoder() models.ObjectModel {
 	return &ReverseOrderEncoder{
-		Name:        "reverse-order",
+		Name:        "reverse_order",
 		Description: "Reverse the order of the shellcode byte array.",
 		Debug:       false,
 	}

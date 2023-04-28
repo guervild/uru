@@ -20,8 +20,19 @@ import (
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List basic options, and artifacts (encoders, evasions and injectors).",
-	Long:  `List basic options, and artifacts (encoders, evasions and injectors). Accept : "encoders", "evasions", "injectors", or "options"`,
-	Args:  cobra.RangeArgs(1, 2),
+	Long:  `List basic options, and artifacts (encoders, evasions and injectors).
+usage: 
+./uru <artifact> <language>
+
+Accepted artifacts: "encoders", "evasions", "injectors", or "options"
+Accepted language: "go", "c"
+Note: options does not need a language`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 || len(args) > 2 {
+			return fmt.Errorf("List need one to two arguments: ./uru list <articaft type> [language]. See --help")
+		}
+		return nil
+	},
 	Run:   List,
 }
 
@@ -39,7 +50,7 @@ func List(cmd *cobra.Command, args []string) {
 		}
 
 		if strings.ToLower(args[1]) != "go" &&  strings.ToLower(args[1]) != "c" {
-			fmt.Println("Language must be'go' or 'c'")
+			fmt.Printf("language %s provided not supported\n", args[1])
 			return
 		}
 	}
@@ -102,7 +113,7 @@ func listEncoders(langType string) map[string]string {
 
 		encoderValue, err := encoder.GetEncoder(strings.ToLower(v), langType)
 		if err != nil {
-			logger.Logger.Info().Msg(err.Error())
+			//logger.Logger.Info().Msg(err.Error())
 		} else {
 			name := common.GetField(encoderValue, "Name")
 			desc := common.GetField(encoderValue, "Description")
@@ -141,12 +152,10 @@ func listInjectors(langType string) map[string]string {
 
 	for _, v := range injectors {
 		path := strings.ReplaceAll(v, fmt.Sprintf("templates/%s/injector/", langType), "")
-		//path = strings.ReplaceAll(path, "local/", "")
-		//path = strings.ReplaceAll(path, "-", "")
 
 		injectorValue, err := injector.GetInjector(strings.ToLower(path), langType)
 		if err != nil {
-			logger.Logger.Info().Msg(err.Error())
+			//logger.Logger.Info().Msg(err.Error())
 		} else {
 			name := common.GetField(injectorValue, "Name")
 			desc := common.GetField(injectorValue, "Description")
