@@ -1,14 +1,15 @@
 package builder
 
 import (
-	"encoding/hex"
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"text/template"
+	"encoding/hex"
+	"fmt"
 
 	"github.com/guervild/uru/data"
 	"github.com/guervild/uru/pkg/common"
@@ -24,28 +25,21 @@ import (
 )
 
 type Builder struct {
-	Type               string
-	Args               string
-	ShellcodeData      string
-	Imports            []string
-	InstancesCode      []string
-	FunctionsCode      []string
-	DebugInstance      string
-	DebugFunction      string
-	IsDLL              bool
-	IsService          bool
-	ExportNames        string
+	Type          string
+	Args          string
+	ShellcodeData string
+	ShellcodeLen  string
+	Imports       []string
+	InstancesCode []string
+	FunctionsCode []string
+	Debug         bool
+	IsDLL         bool
+	IsService     bool
+	ExportNames   string
+	OutDirPath    string
 	ServiceName   	   string
 	ServiceDisplayName string
 	ServiceDescription string
-}
-
-type GoMod struct {
-	RandomName string
-}
-
-type Variables struct {
-	Debug bool
 }
 
 type PayloadConfig struct {
@@ -76,6 +70,7 @@ type ServiceOptions struct {
 }
 
 type Payload struct {
+	Lang               string          `yaml:"lang,omitempty"`
 	Arch               string          `yaml:"arch,omitempty"`
 	Debug              bool            `yaml:"debug"`
 	Type               string          `yaml:"type,omitempty"`
@@ -101,8 +96,7 @@ func NewPayloadConfigFromFile(data []byte) (PayloadConfig, error) {
 	return p, nil
 }
 
-func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []byte, godonut, srdi, keep bool, parameters, functionName, class string, clearHeader bool) (string, []byte, error) {
-
+func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, payload []byte, godonut, srdi, keep bool, parameters, functionName, class string, clearHeader bool) (string, []byte, error) {
 	//TODO rework createfilefunc
 	//define var that will be use later by generate
 	currRandom := common.RandomString(4)
@@ -110,8 +104,6 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 
 	// Instanciate needed array
 	var imports []string
-	var debugFunction string
-	var debugInstance string
 	var instancesCode []string
 	var functionsCode []string
 	var encodersArray []models.ObjectModel
@@ -121,11 +113,24 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 	var serviceName string
 	var serviceDisplayName string
 	var serviceDescription string
+	var binFile string
+	var err error
+	var artifactList []string
+
+	//create output dir
+	tempFileBase := fmt.Sprintf("out_%s", currRandom)
+	dirPath, _ := filepath.Abs(path.Join("out", tempFileBase))
+	err = common.CreateDir(dirPath)
+	if err != nil {
+		return "", nil, err
+	}
+
+	logger.Logger.Info().Str("output_directory", dirPath).Msg("Create the output directory")
 
 	payloadData := payload
 
 	//Process contents
-	arch, err := common.GetProperGolangArch(payloadConfig.Payload.Arch)
+	arch, err := compiler.GetProperArch(payloadConfig.Payload.Arch, payloadConfig.Payload.Lang)
 	if err != nil {
 		return "", nil, err
 	}
@@ -136,44 +141,35 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 	isDLL := false
 	isService := false
 
-	switch strings.ToLower(payloadConfig.Payload.Type) {
-	case "exe":
-		extension = "exe"
-	case "dll":
-		extension = "dll"
-		buildmode = "c-shared"
-		isDLL = true
-	case "svc":
-		extension = "exe"
+	//TODO clean that for services
+	if strings.ToLower(payloadConfig.Payload.Type) == "svc" {
 		isService = true
 		serviceName = payloadConfig.Payload.ServiceOptions.ServiceName
 		serviceDisplayName = payloadConfig.Payload.ServiceOptions.ServiceDisplayName
 		serviceDescription = payloadConfig.Payload.ServiceOptions.ServiceDescription
-	case "cpl":
-		extension = "cpl"
-		buildmode = "c-shared"
-		isDLL = true
-	case "xll":
-		extension = "xll"
-		buildmode = "c-shared"
-		isDLL = true
-	case "pie":
-		extension = "exe"
-		buildmode = "pie"
-	default:
-		return "", nil, fmt.Errorf("Type must be exe, dll, svc, cpl, xll, or pie.")
+	}
+	// create compiler object
+	thisCompiler, err := compiler.GetEmptyCompiler(payloadConfig.Payload.Lang)
+	if err != nil {
+		return "", nil, err
 	}
 
-	exportNames := common.GetExportNames(extension)
+	// get build info for specific compiler, verify config is supported (dll, exe etc.)
+	extension, buildmode, err = thisCompiler.IsTypeSupported(payloadConfig.Payload.Type)
 
-	obfuscated := payloadConfig.Payload.Obfuscation
+	// check if type is supported
+	if err != nil {
+		return "", nil, err
+	}
 
+	// helps with markup based on file exstension
+	exportNames := thisCompiler.GetExportNames(extension)
+
+	// set debug flag, append debug imports
 	if payloadConfig.Payload.Debug {
-		logger.Logger.Info().Msg("Debug is set, will add debug functions")
+		logger.Logger.Info().Msg("Debug is set, adding debug functionality")
 		debug = true
-		imports = append(imports, common.GetDebugImports()...)
-		debugFunction = common.GetDebugFunction()
-		debugInstance = common.GetDebugInstance()
+		imports = append(imports, thisCompiler.GetDebugImports()...)
 	}
 
 	if godonut == true && srdi == true {
@@ -244,6 +240,8 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 	}
 
 	for _, v := range payloadConfig.Payload.Artifacts {
+		artifactList = append(artifactList, v.Name)
+
 		artifactName := strings.ToLower(v.Name)
 		artifactType := strings.ToLower(v.Type)
 
@@ -252,7 +250,7 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 		var artifactValue models.ObjectModel
 
 		if artifactType == "encoder" {
-			artifactValue, err = encoder.GetEncoder(strings.ToLower(artifactName))
+			artifactValue, err = encoder.GetEncoder(strings.ToLower(artifactName), payloadConfig.Payload.Lang)
 			if err != nil {
 				return "", nil, err
 			}
@@ -260,12 +258,12 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 			encodersArray = append(encodersArray, artifactValue)
 
 		} else if artifactType == "evasion" {
-			artifactValue, err = evasion.GetEvasion(strings.ToLower(artifactName))
+			artifactValue, err = evasion.GetEvasion(strings.ToLower(artifactName), payloadConfig.Payload.Lang)
 			if err != nil {
 				return "", nil, err
 			}
 		} else if artifactType == "injector" {
-			artifactValue, err = injector.GetInjector(strings.ToLower(artifactName))
+			artifactValue, err = injector.GetInjector(strings.ToLower(artifactName), payloadConfig.Payload.Lang)
 			if err != nil {
 				return "", nil, err
 			}
@@ -292,7 +290,6 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 		if len(artifactValue.GetImports()) > 0 {
 			imports = append(imports, artifactValue.GetImports()...)
 		}
-
 		iCode, err := artifactValue.RenderInstanciationCode(dataTmpl)
 		if err != nil {
 			return "", nil, err
@@ -307,7 +304,7 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 			instancesCode = append(instancesCode, iCode)
 		}
 
-		// If it is already added, we dont to add the function code again
+		// If it is already added, we dont need to add the function code again
 		if len(fCode) > 0 && !common.ContainsStringInSliceIgnoreCase(alreadyAddedArtifact, artifactName) {
 			functionsCode = append(functionsCode, fCode)
 		}
@@ -324,6 +321,7 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 	tmpPayloadData := payloadData
 	var tmpPayloadDataout []byte
 
+	// for each encoder specified, do encoding of payload
 	for i := len(encodersStringArray) - 1; i >= 0; i-- {
 
 		e := encodersStringArray[i]
@@ -335,6 +333,7 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 			return "", nil, err
 		}
 
+		// do the encoding
 		methodVal := reflect.ValueOf(artifactValue).MethodByName("Encode")
 		if !methodVal.IsValid() {
 			logger.Logger.Error().Str("encoder", e).Msg("Could not find 'Encode' method")
@@ -357,40 +356,42 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 
 	logger.Logger.Info().Int("size", len(payloadData)).Msg("Payload size after encoding")
 
-	tBuilder, err := template.ParseFS(dataTmpl, "templates/core.go.tmpl")
+	var coreFile string
+	coreFile, err = compiler.GetCoreFile(payloadConfig.Payload.Lang)
 	if err != nil {
 		return "", nil, err
 	}
 
+	// create var tBuilder which is the core template
+	tBuilder, err := template.ParseFS(dataTmpl, coreFile)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// check if dll for formatting template file
+	if buildmode == "c-shared" {
+		isDLL = true
+	}
+
 	//Build builder struct to pass to the template
 	templateData := &Builder{
-		ShellcodeData:      common.GetGolangByteArray(payloadData),
-		Imports:            imports,
-		InstancesCode:      instancesCode,
-		FunctionsCode:      functionsCode,
-		DebugInstance:      debugInstance,
-		DebugFunction:      debugFunction,
-		IsDLL:              isDLL,
+		ShellcodeData: common.GetLanguageByteArray(payloadData, payloadConfig.Payload.Lang),
+		ShellcodeLen:  strconv.Itoa(len(payloadData)),
+		Imports:       imports,
+		InstancesCode: instancesCode,
+		FunctionsCode: functionsCode,
+		Debug:         debug,
+		IsDLL:         isDLL,
 		IsService:          isService,
-		ExportNames:        exportNames,
+		ExportNames:   exportNames,
 		ServiceName:        serviceName,
 		ServiceDisplayName: serviceDisplayName,
 		ServiceDescription: serviceDescription,
 	}
 
-	tempFileBase := fmt.Sprintf("out_%s", currRandom)
-	dirPath, _ := filepath.Abs(path.Join("out", tempFileBase))
-
-	err = common.CreateDir(dirPath)
-	if err != nil {
-		return "", nil, err
-	}
-
-	logger.Logger.Info().Str("output_directory", dirPath).Msg("Create the output directory")
-
-	file, err := common.CreatePayloadFile("", "", dirPath)
+	// write out to go file
+	file, err := common.CreatePayloadFile("", payloadConfig.Payload.Lang, dirPath)
 	defer file.Close()
-
 	if err != nil {
 		return "", nil, err
 	}
@@ -399,72 +400,46 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 	if err != nil {
 		return "", nil, err
 	}
-	//Copy go.mod
-	fileGoMod, err := common.CreatePayloadFile("go", "mod", dirPath)
-	defer fileGoMod.Close()
 
-	if err != nil {
-		return "", nil, err
+	buildData := compiler.BuildData{
+		TargetOs:     "windows",
+		Arch:         arch,
+		DirPath:      dirPath,
+		BuildMode:    buildmode,
+		Keep:         true,
+		Trimpath:     true,
+		Obfuscation:  payloadConfig.Payload.Obfuscation,
+		Imports:      imports,
+		ArtifactList: artifactList,
+		DataTemplate: dataTmpl,
+		FileProps:    payloadConfig.Payload.FilePropertiesPath,
 	}
 
-	tGoMod, err := template.ParseFS(dataTmpl, "templates/go.mod.tmpl")
-	if err != nil {
-		return "", nil, err
-	}
-	err = tGoMod.Execute(fileGoMod, &GoMod{RandomName: common.RandomStringOnlyChar(8)})
-	if err != nil {
-		return "", nil, err
-	}
-
-	//Copy go.sum
-	goSum, _ := dataTmpl.ReadFile("templates/go.sum.tmpl")
-	if err := os.WriteFile(path.Join(dirPath, "go.sum"), goSum, 0666); err != nil {
-		return "", nil, err
-	}
-
-	goFilePath, _ := filepath.Abs(file.Name())
-
-	logger.Logger.Info().Str("path", goFilePath).Msgf("Payload file has been written")
-
-	//FileProperties
-	if payloadConfig.Payload.FilePropertiesPath != "" {
-		logger.Logger.Info().Msgf("Try to use file properties: %s", payloadConfig.Payload.FilePropertiesPath)
-
-		name, err := tampering.BuildFromJson(payloadConfig.Payload.FilePropertiesPath, arch, dirPath)
-
-		if err != nil {
-			logger.Logger.Info().Msgf("Could not use the file properties: %s", err.Error())
-			logger.Logger.Info().Msg("Continue ...")
-		} else {
-			logger.Logger.Info().Msgf("Successfully used file properties with internal name: %s", name)
-		}
-	}
-
-	// Build phase
+	// universal compilation
 	logger.Logger.Info().Str("filename", file.Name()).Msgf("Compiling ...\n")
-	//FIXME keep
-	goConfig := compiler.NewGoConfig("windows", arch, dirPath, buildmode, true, true, obfuscated, imports)
-
-	goBinFile, _ := filepath.Abs(fmt.Sprintf("%s.%s", common.RemoveExt(file.Name()), extension))
-
-	_, err = goConfig.GoBuild(goFilePath, goBinFile)
+	//compile
+	err = thisCompiler.PrepareBuild(buildData)
 	if err != nil {
 		return "", nil, err
 	}
+	srcFilePath, _ := filepath.Abs(file.Name())
 
-	/*TODO FIXME keep
-	/*
-		//If not keep, clean
-		if !keep {
-			err := os.RemoveAll(dirPath)
-			if err != nil {
-				return "", nil, err
-			}
-			//log.Println("Cleaning", dirPath)
-		}
-	*/
+	//if payloadConfig.Payload.OutFileName == "" {
+		// keep random bin file name, add out extension
+		binFile, _ = filepath.Abs(fmt.Sprintf("%s.%s", common.RemoveExt(file.Name()), extension))
+	//} else {
+	//	// get out file path, strip the random name, add the user specified name and extsenion
+	//	binFile, _ = filepath.Abs(fmt.Sprintf("%s/%s.%s", filepath.Dir(file.Name()), payloadConfig.Payload.OutFileName, extension))
+	//}
 
-	fileContent, err := os.ReadFile(goBinFile)
+	// build, report errors
+	_, err = thisCompiler.Build(srcFilePath, binFile)
+	if err != nil {
+		return "", nil, err
+	}
+	
+	// compute hashes
+	fileContent, err := os.ReadFile(binFile)
 	if err != nil {
 		return "", nil, err
 	}
@@ -475,18 +450,18 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 
 	//Signing
 	if (payloadConfig.Payload.LimeLighterArgs != LimeLighterArgs{}) {
-		logger.Logger.Info().Str("file_to_sign", goBinFile).Msg("Using Limelighter by @Tyl0us")
-		fSigned, _ := filepath.Abs(fmt.Sprintf("%s_signed.%s", common.RemoveExt(goBinFile), extension))
+		logger.Logger.Info().Str("file_to_sign", binFile).Msg("Using Limelighter by @Tyl0us")
+		fSigned, _ := filepath.Abs(fmt.Sprintf("%s_signed.%s", common.RemoveExt(binFile), extension))
 
-		errLimeLighter := tampering.Limelighter(goBinFile, fSigned, payloadConfig.Payload.LimeLighterArgs.Domain, payloadConfig.Payload.LimeLighterArgs.Password, payloadConfig.Payload.LimeLighterArgs.Real, "")
+		errLimeLighter := tampering.Limelighter(binFile, fSigned, payloadConfig.Payload.LimeLighterArgs.Domain, payloadConfig.Payload.LimeLighterArgs.Password, payloadConfig.Payload.LimeLighterArgs.Real, "")
 
 		if errLimeLighter != nil {
 			logger.Logger.Info().Msgf("Error while using limelighter to sign the payload: %s\n", errLimeLighter)
 		} else {
 			logger.Logger.Info().Msgf("Signed File Created: %s", fSigned)
-			goBinFile = fSigned
+			binFile = fSigned
 
-			fileContent, err := os.ReadFile(goBinFile)
+			fileContent, err := os.ReadFile(binFile)
 			if err != nil {
 				return "", nil, err
 			}
@@ -497,5 +472,15 @@ func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []b
 		}
 	}
 
-	return goBinFile, nil, nil
+	return binFile, nil, nil
+}
+
+func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []byte, godonut, srdi, keep bool,
+	parameters, functionName, class string, clearHeader bool) (string, []byte, error) {
+
+	if compiler.GetSupportedLangs(payloadConfig.Payload.Lang) {
+		return payloadConfig.GenerateSupportedPayload(filename, payload, godonut, srdi, keep, parameters, functionName,
+			class, clearHeader)
+	}
+	return "", nil, fmt.Errorf("Unsupported \"lang\" type")
 }

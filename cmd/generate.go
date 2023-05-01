@@ -26,7 +26,7 @@ var (
 	//Keep       bool
 	Parameters   string
 	FunctionName string
-	Class 		 string
+	Class        string
 	Output       string
 	ClearHeader  bool
 )
@@ -34,17 +34,26 @@ var (
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	generateCmd.Flags().StringVarP(&Payload, "payload", "p", "", "`Shellcode/Executable` to use in the generated payload")
-	generateCmd.MarkFlagRequired("payload")
-	generateCmd.Flags().StringVarP(&Config, "config", "c", "", "Config file that definied the modules to use")
 	generateCmd.MarkFlagRequired("config")
-	generateCmd.Flags().StringVarP(&Parameters, "parameters", "", "", "Parameters to pass to the payload (use with donut/srdi)")
-	generateCmd.Flags().StringVarP(&Output, "output", "o", "", "Output file name")
-	generateCmd.Flags().BoolVarP(&Donut, "donut", "", false, "Process the given payload as an executable using go-donut")
-	generateCmd.Flags().BoolVarP(&Srdi, "srdi", "", false, "Convert dll into a position independant code that uses a rdll loader to execute the dll entrypoint.")
-	generateCmd.Flags().StringVarP(&FunctionName, "functionname", "", "", "Methods to call if .Net payload (with donut) or Function name to call after DLL Main (with srdi)")
-	generateCmd.Flags().StringVarP(&Class, "class", "", "", ".Net Class to call (use with donut)")
-	generateCmd.Flags().BoolVarP(&ClearHeader, "clearheader", "", false, "Remove peheader of the payload if set (use with srdi)")
+	generateCmd.MarkFlagRequired("payload")
+	generateCmd.Flags().StringVarP(&Payload, "payload", "p", "",
+		"`Shellcode/Executable` to use in the generated payload")
+	generateCmd.Flags().StringVarP(&Config, "config", "c", "",
+		"Config file that definied the modules to use")
+	generateCmd.Flags().StringVarP(&Parameters, "parameters", "", "",
+		"Parameters to pass to the payload (use with donut/srdi)")
+	generateCmd.Flags().StringVarP(&Output, "output", "o", "",
+		"Output file name")
+	generateCmd.Flags().BoolVarP(&Donut, "donut", "", false,
+		"Process the given payload as an executable using go-donut")
+	generateCmd.Flags().BoolVarP(&Srdi, "srdi", "", false,
+		"Convert dll into a position independant code that uses a rdll loader to execute the dll entrypoint.")
+	generateCmd.Flags().StringVarP(&FunctionName, "functionname", "", "",
+		"Methods to call if .Net payload (with donut) or Function name to call after DLL Main (with srdi)")
+	generateCmd.Flags().StringVarP(&Class, "class", "", "",
+		".Net Class to call (use with donut)")
+	generateCmd.Flags().BoolVarP(&ClearHeader, "clearheader", "", false,
+		"Remove peheader of the payload if set (use with srdi)")
 
 	//generateCmd.Flags().BoolVarP(&Executable, "keep", "", false, "Keep the content of the out directory (generated code, but also obfuscated code and cache if obfuscation is set to true)")
 

