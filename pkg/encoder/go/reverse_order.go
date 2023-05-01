@@ -36,10 +36,10 @@ func (e *ReverseOrderEncoder) GetImports() []string {
 
 func (e *ReverseOrderEncoder) RenderInstanciationCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/encoders/reverse-order/instanciation.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/encoders/reverse_order/instanciation.go.tmpl", e)
 }
 
 func (e *ReverseOrderEncoder) RenderFunctionCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/encoders/reverse-order/functions.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/encoders/reverse_order/functions.go.tmpl", e)
 }
