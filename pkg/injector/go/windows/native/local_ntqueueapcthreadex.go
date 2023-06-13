@@ -37,5 +37,5 @@ func (e *NtQueueApcThreadExLocal) RenderInstanciationCode(data embed.FS) (string
 
 func (e *NtQueueApcThreadExLocal) RenderFunctionCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/injector/windows/native/local/createThread/functions.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/injector/windows/native/local/ntqueueapcthreadex/functions.go.tmpl", e)
 }
