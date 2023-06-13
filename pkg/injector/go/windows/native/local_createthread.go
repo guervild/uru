@@ -32,10 +32,10 @@ func (i *CreateThreadNative) GetImports() []string {
 
 func (e *CreateThreadNative) RenderInstanciationCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/injector/windows/native/local/CreateThreadNative/instanciation.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/injector/windows/native/local/createThread/instanciation.go.tmpl", e)
 }
 
 func (e *CreateThreadNative) RenderFunctionCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/injector/windows/native/local/CreateThreadNative/functions.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/injector/windows/native/local/createThread/functions.go.tmpl", e)
 }
