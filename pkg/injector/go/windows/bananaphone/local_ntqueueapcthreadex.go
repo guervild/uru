@@ -33,10 +33,10 @@ func (i *NtQueueApcThreadExLocal) GetImports() []string {
 
 func (e *NtQueueApcThreadExLocal) RenderInstanciationCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/NtQueueApcThreadEx-Local/instanciation.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ntqueueapcthreadex/instanciation.go.tmpl", e)
 }
 
 func (e *NtQueueApcThreadExLocal) RenderFunctionCode(data embed.FS) (string, error) {
 
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/NtQueueApcThreadEx-Local/functions.go.tmpl", e)
+	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ntqueueapcthreadex/functions.go.tmpl", e)
 }
