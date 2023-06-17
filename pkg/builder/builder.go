@@ -326,8 +326,9 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 
 		e := encodersStringArray[i]
 		artifactValue := encodersArray[i]
+		fileEntropyBefore, _ := common.GetFileEntropy(tmpPayloadData)
 
-		logger.Logger.Info().Int("size", len(tmpPayloadData)).Msgf("Payload size before %s", e)
+		logger.Logger.Info().Int("size", len(tmpPayloadData)).Float64("entropy", fileEntropyBefore).Msgf("Payload info before %s", e)
 
 		if err != nil {
 			return "", nil, err
@@ -348,8 +349,9 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		}
 
 		tmpPayloadData = tmpPayloadDataout
+		fileEntropyAfter, _ := common.GetFileEntropy(tmpPayloadData)
 
-		logger.Logger.Info().Int("size", len(tmpPayloadData)).Msgf("Payload size after %s", e)
+		logger.Logger.Info().Int("size", len(tmpPayloadData)).Float64("entropy", fileEntropyAfter).Msgf("Payload info after %s", e)
 	}
 
 	payloadData = tmpPayloadData

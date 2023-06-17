@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -13,6 +14,8 @@ import (
 	"time"
 
 	"github.com/guervild/uru/data"
+
+	"github.com/lazybeaver/entropy"
 )
 
 func RandomInt(start, end int) int {
@@ -237,4 +240,13 @@ func GetEnglishWords() []string {
 	}
 	englishWords := strings.Split(string(rawEnglish), "\n")
 	return englishWords
+}
+
+func GetFileEntropy(input []byte) (float64, error) {
+	estimator := entropy.NewShannonEstimator()
+	buf := bytes.NewBuffer(input)
+	if _, err := io.Copy(estimator, buf); err != nil {
+		return 0.0, err
+	}
+	return estimator.Value(), nil
 }
