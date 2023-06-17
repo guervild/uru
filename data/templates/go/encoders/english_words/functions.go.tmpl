@@ -1,0 +1,25 @@
+func decodeEnglishWords(content []byte) ([]byte, error) {
+
+	dictionary := {{ .DictionaryStr }}
+
+    str2 := string(content)
+
+    sliceStr2 := strings.Split(str2,",")
+
+	for i,w := range sliceStr2 {
+		sliceStr2[i] = strings.Trim(w, "\"")
+	} 
+
+	decoded := make([]byte, 0)
+
+	for _, b := range sliceStr2 {
+		for j, db := range dictionary {
+			if db == b {
+				decoded = append(decoded, byte(j))
+				break
+			}
+		}
+	}
+	
+	return decoded, nil
+}

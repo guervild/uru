@@ -1,0 +1,11 @@
+{{if .Debug}}
+printDebug("info","Use english words to decode data")
+{{end}}
+shellcode, errEnglishWords := decodeEnglishWords(shellcode)
+
+if errEnglishWords != nil {
+	{{if .Debug}}
+	printDebug("error","decodeEnglishWords function error: %s", errEnglishWords)
+	{{end}}
+	return
+}

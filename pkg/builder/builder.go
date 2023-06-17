@@ -309,7 +309,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 			functionsCode = append(functionsCode, fCode)
 		}
 
-		alreadyAddedArtifact = append(alreadyAddedArtifact, artifactName)
+		alreadyAddedArtifact = append(alreadyAddedArtifact, strings.ToLower(fmt.Sprintf("%s-%s", artifactType, artifactName)))
 	}
 
 	//Remove duplicate imports

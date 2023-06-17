@@ -188,8 +188,9 @@ To encode your payload (and avoid to store it in plaintext), you can use the fol
 | rc4           | Use rc4 encoding to encode given data  |
 | xor           | Use xor algorithm to encode given data |
 | zip           | Use zip compression on given data      |
-| reverse-order | Reverse the order of the shellcode byte array. |
+| reverse_order | Reverse the order of the shellcode byte array. |
 | uuid          | [experimental/dev] Transform data into UUID string (only works with ninjauuid injector). |
+| english_word  | Transform data into random english words |
 
 #### C
 | Name          | Description                            |

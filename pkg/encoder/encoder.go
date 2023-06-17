@@ -39,6 +39,10 @@ func GetEncoder(encoderType string, langType string) (models.ObjectModel, error)
 			return _go.NewUUIDEncoder(), nil
 		}
 
+		if encoderType == "english_words" {
+			return _go.NewEnglishWordsEncoder(), nil
+		}
+
 		return nil, fmt.Errorf("Wrong encoder type passed: encoder %s is unknown", encoderType)
 	case "c":
 		if encoderType == "xor" {
