@@ -24,7 +24,6 @@ func NewZipEncoder() models.ObjectModel {
 }
 
 func (e *ZipEncoder) Encode(shellcode []byte) ([]byte, error) {
-
 	var b bytes.Buffer
 
 	z := zip.NewWriter(&b)
@@ -47,7 +46,6 @@ func (e *ZipEncoder) Encode(shellcode []byte) ([]byte, error) {
 }
 
 func (e *ZipEncoder) GetImports() []string {
-
 	return []string{
 		`"archive/zip"`,
 		`"bytes"`,
@@ -56,11 +54,9 @@ func (e *ZipEncoder) GetImports() []string {
 }
 
 func (e *ZipEncoder) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/zip/instanciation.go.tmpl", e)
 }
 
 func (e *ZipEncoder) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/zip/functions.go.tmpl", e)
 }

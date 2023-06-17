@@ -26,7 +26,6 @@ func NewCreateMutexEvasion() models.ObjectModel {
 }
 
 func (e *CreateMutexEvasion) GetImports() []string {
-
 	return []string{
 		`"unsafe"`,
 		`"syscall"`,
@@ -34,11 +33,9 @@ func (e *CreateMutexEvasion) GetImports() []string {
 }
 
 func (e *CreateMutexEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/createmutex/instanciation.go.tmpl", e)
 }
 
 func (e *CreateMutexEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/createmutex/functions.go.tmpl", e)
 }

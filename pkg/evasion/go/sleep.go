@@ -26,18 +26,15 @@ func NewSleepEvasion() models.ObjectModel {
 }
 
 func (e *SleepEvasion) GetImports() []string {
-
 	return []string{
 		`"time"`,
 	}
 }
 
 func (e *SleepEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/sleep/instanciation.go.tmpl", e)
 }
 
 func (e *SleepEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return "", nil
 }

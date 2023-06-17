@@ -1,6 +1,6 @@
 package _go
 
-//inspired by https://github.com/D00MFist/Go4aRun/blob/493acbb0c38be9719dbfa7f44e5d4d9d144709c9/pkg/useful/useful.go#L27
+// inspired by https:// github.com/D00MFist/Go4aRun/blob/493acbb0c38be9719dbfa7f44e5d4d9d144709c9/pkg/useful/useful.go#L27.
 import (
 	"crypto/aes"
 	"crypto/cipher"
@@ -29,7 +29,6 @@ func NewAESEncoder() models.ObjectModel {
 }
 
 func (e *AESEncoder) Encode(shellcode []byte) ([]byte, error) {
-
 	block, _ := aes.NewCipher([]byte(e.Key))
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
@@ -45,7 +44,6 @@ func (e *AESEncoder) Encode(shellcode []byte) ([]byte, error) {
 }
 
 func (e *AESEncoder) GetImports() []string {
-
 	return []string{
 		`"crypto/aes"`,
 		`"crypto/cipher"`,
@@ -53,11 +51,9 @@ func (e *AESEncoder) GetImports() []string {
 }
 
 func (e *AESEncoder) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/aes/instanciation.go.tmpl", e)
 }
 
 func (e *AESEncoder) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/aes/functions.go.tmpl", e)
 }

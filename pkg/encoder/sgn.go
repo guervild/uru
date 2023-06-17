@@ -1,6 +1,6 @@
 package encoder
 
-//[SGN] - DECOMMENT TO USE SGN
+// [SGN] - DECOMMENT TO USE SGN
 /*
 import (
 	"fmt"

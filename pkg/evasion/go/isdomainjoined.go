@@ -22,18 +22,15 @@ func NewIsDomainJoinedEvasion() models.ObjectModel {
 }
 
 func (e *IsDomainJoinedEvasion) GetImports() []string {
-
 	return []string{
 		`"syscall"`,
 	}
 }
 
 func (e *IsDomainJoinedEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/isdomainjoined/instanciation.go.tmpl", e)
 }
 
 func (e *IsDomainJoinedEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/isdomainjoined/functions.go.tmpl", e)
 }

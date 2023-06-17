@@ -32,7 +32,6 @@ func NewRefreshDllEvasion() models.ObjectModel {
 }
 
 func (e *RefreshDllEvasion) GetImports() []string {
-
 	imports := []string{
 		`"debug/pe"`,
 		`"io/ioutil"`,
@@ -49,11 +48,9 @@ func (e *RefreshDllEvasion) GetImports() []string {
 }
 
 func (e *RefreshDllEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/refreshdll/instanciation.go.tmpl", e)
 }
 
 func (e *RefreshDllEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/refreshdll/functions.go.tmpl", e)
 }

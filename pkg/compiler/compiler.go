@@ -3,8 +3,8 @@ package compiler
 import (
 	"embed"
 	"fmt"
-	"strings"
 	"os/exec"
+	"strings"
 
 	"github.com/guervild/uru/pkg/common"
 )
@@ -36,9 +36,8 @@ var supportedLangs = []string{
 	"c",
 }
 
-// GetEmptyCompiler retrieve correct compiler based on language
+// GetEmptyCompiler retrieve correct compiler based on language.
 func GetEmptyCompiler(lang string) (compiler, error) {
-
 	switch strings.ToLower(lang) {
 	case "go":
 		return NewEmptyGoConfig(), nil
@@ -58,9 +57,7 @@ func IsTargetCompilerInstalled(target string) (string, error) {
 	return exec.LookPath(target)
 }
 
-
 func GetProperArch(arch string, lang string) (string, error) {
-
 	switch lang {
 	case "go":
 		if arch == "x64" {

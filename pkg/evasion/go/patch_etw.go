@@ -17,7 +17,6 @@ type PatchEtwEvasion struct {
 }
 
 func NewPatchEtwEvasion() models.ObjectModel {
-
 	return &PatchEtwEvasion{
 		Name: "patchetw",
 		Description: `Path etw. Can use BananaPhone if set. (credits: method taken from Merlin, @Ne0nd0g)
@@ -29,7 +28,6 @@ func NewPatchEtwEvasion() models.ObjectModel {
 }
 
 func (e *PatchEtwEvasion) GetImports() []string {
-
 	imports := []string{
 		`"fmt"`,
 		`"syscall"`,

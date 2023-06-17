@@ -17,7 +17,6 @@ type PatchAmsiEvasion struct {
 }
 
 func NewPatchAmsiEvasion() models.ObjectModel {
-
 	return &PatchAmsiEvasion{
 		Name: "patchamsi",
 		Description: `Path amsi. Can use BananaPhone if set. (credits: method taken from Merlin, @Ne0nd0g)
@@ -29,7 +28,6 @@ func NewPatchAmsiEvasion() models.ObjectModel {
 }
 
 func (e *PatchAmsiEvasion) GetImports() []string {
-
 	imports := []string{
 		`"fmt"`,
 		`"syscall"`,

@@ -26,18 +26,15 @@ func NewCSleepEvasion() models.ObjectModel {
 }
 
 func (e *CSleepEvasion) GetImports() []string {
-
 	return []string{
 		"windows.h",
 	}
 }
 
 func (e *CSleepEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/c/evasions/sleep/instanciations.c.tmpl", e)
 }
 
 func (e *CSleepEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return "", nil
 }

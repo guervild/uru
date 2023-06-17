@@ -1,12 +1,10 @@
-// modified from https://github.com/BishopFox/sliver/blob/5bcfa4c249341e9c9032abcaaf1d4cf459e20059/server/gogo/go.go
+// modified from https:// github.com/BishopFox/sliver/blob/5bcfa4c249341e9c9032abcaaf1d4cf459e20059/server/gogo/go.go
 
 package compiler
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/guervild/uru/pkg/common"
-	"github.com/guervild/uru/pkg/tampering"
 	"go/build"
 	"os"
 	"os/exec"
@@ -14,6 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/guervild/uru/pkg/common"
+	"github.com/guervild/uru/pkg/tampering"
 
 	"github.com/guervild/uru/pkg/logger"
 )
@@ -36,12 +37,11 @@ type GoConfig struct {
 }
 
 func (g *GoConfig) GetExportNames(extension string) string {
-
 	lowerExtension := strings.ToLower(extension)
 
 	if lowerExtension == "cpl" {
 		return `
-		//export CPlApplet
+		// export CPlApplet
 		func CPlApplet() {
 			Start()
 		}`
@@ -49,17 +49,17 @@ func (g *GoConfig) GetExportNames(extension string) string {
 
 	if lowerExtension == "dll" {
 		return `
-		//export DllRegisterServer
+		// export DllRegisterServer
 		func DllRegisterServer() {
 			Start()
 		}
 		
-		//export DllGetClassObject
+		// export DllGetClassObject
 		func DllGetClassObject() {
 			Start()
 		}
 		
-		//export DllUnregisterServer
+		// export DllUnregisterServer
 		func DllUnregisterServer() {
 			Start()
 		}`
@@ -67,7 +67,7 @@ func (g *GoConfig) GetExportNames(extension string) string {
 
 	if lowerExtension == "xll" {
 		return `
-		//export xlAutoOpen
+		// export xlAutoOpen
 		func xlAutoOpen() {
 			Start()
 		}`
@@ -94,13 +94,14 @@ func (g *GoConfig) GetDebugImports() []string {
 }
 
 func (g *GoConfig) PrepareBuild(buildData BuildData) error {
-
-	//Copy go.mod
+	// Copy go.mod
 	fileGoMod, err := common.CreatePayloadFile("go", "mod", buildData.DirPath)
-	defer fileGoMod.Close()
+
 	if err != nil {
 		return err
 	}
+
+	defer fileGoMod.Close()
 
 	// go.mod template formatting
 	tGoMod, err := template.ParseFS(buildData.DataTemplate, "templates/go/go.mod.tmpl")
@@ -112,13 +113,13 @@ func (g *GoConfig) PrepareBuild(buildData BuildData) error {
 		return err
 	}
 
-	//Copy go.sum
+	// Copy go.sum
 	goSum, _ := buildData.DataTemplate.ReadFile("templates/go/go.sum.tmpl")
 	if err := os.WriteFile(path.Join(buildData.DirPath, "go.sum"), goSum, 0666); err != nil {
 		return err
 	}
 
-	//FileProperties
+	// FileProperties
 	if buildData.FileProps != "" {
 		logger.Logger.Info().Msgf("Try to use file properties: %s", buildData.FileProps)
 
@@ -146,7 +147,6 @@ func (g *GoConfig) PrepareBuild(buildData BuildData) error {
 }
 
 func (g *GoConfig) Build(payload, dest string) ([]byte, error) {
-
 	g.BuildGoBuildCommand(payload, dest)
 
 	if 0 >= len(g.Command) {
@@ -168,14 +168,13 @@ func (g *GoConfig) Build(payload, dest string) ([]byte, error) {
 	err := cmd.Run()
 
 	if err != nil {
-		return nil, fmt.Errorf("error %s: %s", err, string(stderr.Bytes()))
+		return nil, fmt.Errorf("error %w: %s", err, string(stderr.String()))
 	}
 
 	return stdout.Bytes(), err
 }
 
 func (g *GoConfig) BuildGoBuildCommand(payload, dest string) {
-
 	// Get Compiler
 	var compilerPath string
 	gopath := os.Getenv("GOPATH")
@@ -200,13 +199,13 @@ func (g *GoConfig) BuildGoBuildCommand(payload, dest string) {
 
 	logger.Logger.Debug().Str("compiler_path", g.CompilerPath).Msg("Set the compiler path")
 
-	//Getting the right env variables
+	// Getting the right env variables
 	env := []string{"GOPRIVATE=*", fmt.Sprintf("GOCACHE=%s", g.GOCACHE), fmt.Sprintf("GOPATH=%s", gopath), fmt.Sprintf("GOOS=%s", g.GOOS), fmt.Sprintf("GOARCH=%s", g.GOARCH), fmt.Sprintf("PATH=%s", os.Getenv("PATH"))}
-	
+
 	if homeEnv != "" {
 		env = append(env, fmt.Sprintf("HOME=%s", homeEnv))
 	}
-	
+
 	if g.Buildmode == "c-shared" {
 		env = append(env, "CGO_ENABLED=1")
 		env = append(env, "CXX=x86_64-w64-mingw32-g++")
@@ -230,7 +229,7 @@ func (g *GoConfig) BuildGoBuildCommand(payload, dest string) {
 
 	logger.Logger.Debug().Str("compile_env_vars", strings.Join(g.Env, " ")).Msg("Set the environment variables")
 
-	//Setting up go command
+	// Setting up go command
 	goCommand := []string{"build"}
 
 	ldflags := []string{"-s -w -buildid="}
@@ -252,12 +251,11 @@ func (g *GoConfig) BuildGoBuildCommand(payload, dest string) {
 		goCommand = g.GetGarbleArgs(goCommand)
 	}
 
-	//Final command
+	// Final command
 	g.Command = append(g.Command, goCommand...)
 }
 
 func (g *GoConfig) GetGarbleArgs(command []string) []string {
-
 	var goCommand = []string{}
 
 	if g.Keep {
@@ -271,9 +269,8 @@ func (g *GoConfig) GetGarbleArgs(command []string) []string {
 	return goCommand
 }
 
-// IsTypeSupported retrieves build info based on type of executable
+// IsTypeSupported retrieves build info based on type of executable.
 func (g *GoConfig) IsTypeSupported(t string) (string, string, error) {
-
 	switch strings.ToLower(t) {
 	case "exe":
 		return "exe", "", nil
@@ -292,8 +289,8 @@ func (g *GoConfig) IsTypeSupported(t string) (string, string, error) {
 	}
 }
 
-// modified from https://github.com/BishopFox/sliver/blob/5bcfa4c249341e9c9032abcaaf1d4cf459e20059/server/gogo/go.go#L107
-// GetGoCache - Get the OS temp dir (used for GOCACHE)
+// modified from https:// github.com/BishopFox/sliver/blob/5bcfa4c249341e9c9032abcaaf1d4cf459e20059/server/gogo/go.go#L107
+// GetGoCache - Get the OS temp dir (used for GOCACHE).
 func getGoCache(appDir string) string {
 	cachePath := path.Join(appDir, "cache")
 	os.MkdirAll(cachePath, 0700)

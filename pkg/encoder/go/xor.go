@@ -28,23 +28,20 @@ func (e *XorEncoder) Encode(shellcode []byte) ([]byte, error) {
 	kL := len(e.Key)
 
 	for i := range shellcode {
-		output = append(output, byte(shellcode[i]^e.Key[i%kL]))
+		output = append(output, shellcode[i]^e.Key[i%kL])
 	}
 
 	return output, nil
 }
 
 func (e *XorEncoder) GetImports() []string {
-
 	return nil
 }
 
 func (e *XorEncoder) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/xor/instanciation.go.tmpl", e)
 }
 
 func (e *XorEncoder) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/xor/functions.go.tmpl", e)
 }

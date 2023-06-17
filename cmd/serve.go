@@ -21,7 +21,6 @@ func init() {
 }
 
 func Serve(cmd *cobra.Command, args []string) {
-
 	a := api.App{}
 	a.Initialize()
 	a.Run(Addr)

@@ -1,6 +1,6 @@
 package _go
 
-//Thanks https://github.com/Ne0nd0g/go-shellcode#UuidFromStringA
+// Thanks https://github.com/Ne0nd0g/go-shellcode#UuidFromStringA
 
 import (
 	"bytes"
@@ -60,18 +60,15 @@ func (e *UUIDEncoder) Encode(shellcode []byte) ([]byte, error) {
 }
 
 func (e *UUIDEncoder) GetImports() []string {
-
 	return []string{
 		`"encoding/hex"`,
 	}
 }
 
 func (e *UUIDEncoder) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return "", nil
 }
 
 func (e *UUIDEncoder) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return "", nil
 }

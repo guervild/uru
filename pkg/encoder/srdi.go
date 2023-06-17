@@ -7,9 +7,9 @@ import (
 
 /*
 Taken from:
-https://gist.github.com/leoloobeek/c726719d25d7e7953d4121bd93dd2ed3
-https://github.com/ne0nd0g/merlin/blob/v0.7.0/pkg/modules/srdi/srdi.go#L116
-https://github.com/timwhitez/Doge-sRDI/blob/main/srdi.go
+https:// gist.github.com/leoloobeek/c726719d25d7e7953d4121bd93dd2ed3
+https:// github.com/ne0nd0g/merlin/blob/v0.7.0/pkg/modules/srdi/srdi.go#L116
+https:// github.com/timwhitez/Doge-sRDI/blob/main/srdi.go
 */
 
 func ConvertToSRDIShellcode(dllBytes []byte, functionName, userDataStr string, clearHeader bool) []byte {

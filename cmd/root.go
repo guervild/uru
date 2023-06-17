@@ -10,7 +10,7 @@ import (
 
 var (
 	JsonLog bool
-	Debug bool
+	Debug   bool
 )
 
 var rootCmd = &cobra.Command{
@@ -30,8 +30,6 @@ func Execute() {
 }
 
 func init() {
-
 	rootCmd.PersistentFlags().BoolVarP(&JsonLog, "jsonlog", "", false, "Print logs using json output")
 	rootCmd.PersistentFlags().BoolVarP(&Debug, "debug", "", false, "Print addtionnal debug log")
-
 }

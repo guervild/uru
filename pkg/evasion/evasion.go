@@ -2,13 +2,13 @@ package evasion
 
 import (
 	"fmt"
+
 	"github.com/guervild/uru/pkg/evasion/c"
-	"github.com/guervild/uru/pkg/evasion/go"
+	_go "github.com/guervild/uru/pkg/evasion/go"
 	"github.com/guervild/uru/pkg/models"
 )
 
 func GetEvasion(evasionType string, langType string) (models.ObjectModel, error) {
-
 	switch langType {
 	case "go":
 		if evasionType == "sleep" {

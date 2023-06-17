@@ -24,7 +24,6 @@ func NewNinjaUUID() models.ObjectModel {
 }
 
 func (i *NinjaUUID) GetImports() []string {
-
 	return []string{
 		`"syscall"`,
 		`"unsafe"`,
@@ -33,12 +32,10 @@ func (i *NinjaUUID) GetImports() []string {
 	}
 }
 
-func (e *NinjaUUID) RenderInstanciationCode(data embed.FS) (string, error) {
-
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ninja_uuid/instanciation.go.tmpl", e)
+func (i *NinjaUUID) RenderInstanciationCode(data embed.FS) (string, error) {
+	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ninja_uuid/instanciation.go.tmpl", i)
 }
 
-func (e *NinjaUUID) RenderFunctionCode(data embed.FS) (string, error) {
-
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ninja_uuid/functions.go.tmpl", e)
+func (i *NinjaUUID) RenderFunctionCode(data embed.FS) (string, error) {
+	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ninja_uuid/functions.go.tmpl", i)
 }

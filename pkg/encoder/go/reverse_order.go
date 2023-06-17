@@ -30,16 +30,13 @@ func (e *ReverseOrderEncoder) Encode(shellcode []byte) ([]byte, error) {
 }
 
 func (e *ReverseOrderEncoder) GetImports() []string {
-
 	return []string{}
 }
 
 func (e *ReverseOrderEncoder) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/reverse_order/instanciation.go.tmpl", e)
 }
 
 func (e *ReverseOrderEncoder) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/reverse_order/functions.go.tmpl", e)
 }

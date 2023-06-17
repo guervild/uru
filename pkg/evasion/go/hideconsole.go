@@ -28,7 +28,6 @@ func NewHideConsoleEvasion() models.ObjectModel {
 }
 
 func (e *HideConsoleEvasion) GetImports() []string {
-
 	return []string{
 		`"syscall"`,
 	}
@@ -43,6 +42,5 @@ func (e *HideConsoleEvasion) RenderInstanciationCode(data embed.FS) (string, err
 }
 
 func (e *HideConsoleEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/hideconsole/functions.go.tmpl", e)
 }

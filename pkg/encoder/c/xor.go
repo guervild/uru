@@ -2,11 +2,12 @@ package c
 
 import (
 	"embed"
+
 	"github.com/guervild/uru/pkg/common"
 	"github.com/guervild/uru/pkg/models"
 )
 
-// taken from go implmentation
+// taken from go implmentation.
 type xorEncoder struct {
 	Name        string
 	Description string
@@ -14,7 +15,7 @@ type xorEncoder struct {
 	Debug       bool
 }
 
-// this is used specifically for cmd list
+// this is used specifically for cmd list.
 func NewXorEncoder() models.ObjectModel {
 	return &xorEncoder{
 		Name:        "xor",
@@ -29,7 +30,7 @@ func (e *xorEncoder) Encode(shellcode []byte) ([]byte, error) {
 	kL := len(e.Key)
 
 	for i := range shellcode {
-		output = append(output, byte(shellcode[i]^e.Key[i%kL]))
+		output = append(output, shellcode[i]^e.Key[i%kL])
 	}
 
 	return output, nil
@@ -41,13 +42,13 @@ func (e *xorEncoder) GetImports() []string {
 	}
 }
 
-// taken from go implementation
+// taken from go implementation.
 func (e *xorEncoder) RenderInstanciationCode(data embed.FS) (string, error) {
 	return common.CommonRendering(data, "templates/c/encoders/xor/instanciations.c.tmpl", e)
 }
 
-// taken from go implementation
+// taken from go implementation.
 func (e *xorEncoder) RenderFunctionCode(data embed.FS) (string, error) {
-	//return common.CommonRendering(data, "templates/c/encoders/xor/functions.c.tmpl", e)
+	// return common.CommonRendering(data, "templates/c/encoders/xor/functions.c.tmpl", e)
 	return "", nil
 }

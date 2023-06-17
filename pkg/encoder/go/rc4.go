@@ -25,7 +25,6 @@ func NewRC4Encoder() models.ObjectModel {
 }
 
 func (e *RC4Encoder) Encode(shellcode []byte) ([]byte, error) {
-
 	cipher, err := rc4.NewCipher([]byte(e.Key))
 
 	if err != nil {
@@ -39,18 +38,15 @@ func (e *RC4Encoder) Encode(shellcode []byte) ([]byte, error) {
 }
 
 func (e *RC4Encoder) GetImports() []string {
-
 	return []string{
 		`"crypto/rc4"`,
 	}
 }
 
 func (e *RC4Encoder) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/rc4/instanciation.go.tmpl", e)
 }
 
 func (e *RC4Encoder) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/encoders/rc4/functions.go.tmpl", e)
 }

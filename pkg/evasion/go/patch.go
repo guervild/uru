@@ -20,7 +20,6 @@ type PatchEvasion struct {
 }
 
 func NewPatchEvasion() models.ObjectModel {
-
 	return &PatchEvasion{
 		Name: "patch",
 		Description: `Path a given method (By default patch back EtwEventWrite). Can use BananaPhone if set. (credits: method taken from Merlin, @Ne0nd0g)
@@ -38,7 +37,6 @@ func NewPatchEvasion() models.ObjectModel {
 }
 
 func (e *PatchEvasion) GetImports() []string {
-
 	imports := []string{
 		`"encoding/hex"`,
 		`"fmt"`,

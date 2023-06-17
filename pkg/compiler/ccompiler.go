@@ -1,4 +1,4 @@
-// modified from https://github.com/BishopFox/sliver/blob/5bcfa4c249341e9c9032abcaaf1d4cf459e20059/server/gogo/go.go
+// modified from https:// github.com/BishopFox/sliver/blob/5bcfa4c249341e9c9032abcaaf1d4cf459e20059/server/gogo/go.go
 
 package compiler
 
@@ -17,12 +17,11 @@ type CConfig struct {
 	ProjectDir     string
 	TargetOs       string
 	TargetCompiler string
-	buildDll       bool
 	OutDir         string
 	CompileFlags   []string
 	ExportDefPath  string
 	ArtifactList   []string
-	Env []string
+	Env            []string
 }
 
 func (c *CConfig) GetExportNames(extension string) string {
@@ -39,8 +38,7 @@ func NewEmptyCConfig() *CConfig {
 }
 
 func (c *CConfig) PrepareBuild(buildData BuildData) error {
-
-	var targetCompiler string = "x86_64-w64-mingw32-gcc"
+	targetCompiler := "x86_64-w64-mingw32-gcc"
 	var compileFlags []string
 
 	if common.ContainsStringInSliceIgnoreCase(buildData.Imports, "iostream") {
@@ -56,10 +54,10 @@ func (c *CConfig) PrepareBuild(buildData BuildData) error {
 	path, err := IsTargetCompilerInstalled(targetCompiler)
 
 	if err != nil {
-		return fmt.Errorf("target compiler not found %s", err)
-	} else {
-		logger.Logger.Debug().Str("target_compiler", path).Msg("Path to the target compiler")
+		return fmt.Errorf("target compiler not found %w", err)
 	}
+
+	logger.Logger.Debug().Str("target_compiler", path).Msg("Path to the target compiler")
 
 	// -static needed because we cant assume mingw will be on the target system
 	compileFlags = append(compileFlags, "--static")
@@ -82,7 +80,6 @@ func (c *CConfig) PrepareBuild(buildData BuildData) error {
 }
 
 func (c *CConfig) Build(payload, dest string) ([]byte, error) {
-
 	// remove abs path from dest var
 	c.CompileFlags = append(c.CompileFlags, fmt.Sprintf("-o%s", filepath.Base(dest)))
 
@@ -90,7 +87,7 @@ func (c *CConfig) Build(payload, dest string) ([]byte, error) {
 	c.CompileFlags = append(c.CompileFlags, filepath.Base(payload))
 
 	if common.ContainsStringInSliceIgnoreCase(c.ArtifactList, "dllforward") {
-		c.CompileFlags = append(c.CompileFlags, []string{fmt.Sprintf("%s", "../../data/templates/c/evasions/dllforward/example.def")}...)
+		c.CompileFlags = append(c.CompileFlags, []string{"../../data/templates/c/evasions/dllforward/example.def"}...)
 	}
 	logger.Logger.Debug().Str("project_dir", c.ProjectDir).Msg("Project dir")
 	logger.Logger.Debug().Str("compile_args", strings.Join(c.CompileFlags, " ")).Msg("Defining compile arguments")
@@ -108,14 +105,13 @@ func (c *CConfig) Build(payload, dest string) ([]byte, error) {
 	// run command, gather output
 	err := cmd.Run()
 	if err != nil {
-		return nil, fmt.Errorf("error %s: %s", err, string(stderr.Bytes()))
+		return nil, fmt.Errorf("error %w: %s", err, string(stderr.String()))
 	}
 
 	return stdout.Bytes(), err
 }
 
 func (c *CConfig) IsTypeSupported(t string) (string, string, error) {
-
 	switch strings.ToLower(t) {
 	case "exe":
 		return "exe", "", nil

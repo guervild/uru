@@ -23,7 +23,7 @@ var (
 	Config  string
 	Donut   bool
 	Srdi    bool
-	//Keep       bool
+	// Keep       bool.
 	Parameters   string
 	FunctionName string
 	Class        string
@@ -55,13 +55,11 @@ func init() {
 	generateCmd.Flags().BoolVarP(&ClearHeader, "clearheader", "", false,
 		"Remove peheader of the payload if set (use with srdi)")
 
-	//generateCmd.Flags().BoolVarP(&Executable, "keep", "", false, "Keep the content of the out directory (generated code, but also obfuscated code and cache if obfuscation is set to true)")
-
+	// generateCmd.Flags().BoolVarP(&Executable, "keep", "", false, "Keep the content of the out directory (generated code, but also obfuscated code and cache if obfuscation is set to true)")
 }
 
 func Generate(cmd *cobra.Command, args []string) {
-
-	//Check files
+	// Check files
 	if err := common.CheckIfFileExists(Payload); err != nil {
 		logger.Logger.Fatal().Msg(err.Error())
 	}
@@ -70,7 +68,7 @@ func Generate(cmd *cobra.Command, args []string) {
 		logger.Logger.Fatal().Msg(err.Error())
 	}
 
-	//Process config file
+	// Process config file
 	configFilepath, _ := filepath.Abs(Config)
 	configData, err := ioutil.ReadFile(configFilepath)
 	if err != nil {
@@ -85,7 +83,7 @@ func Generate(cmd *cobra.Command, args []string) {
 		logger.Logger.Fatal().Msg(err.Error())
 	}
 
-	//Process payload file
+	// Process payload file
 	payloadFilepath, _ := filepath.Abs(Payload)
 	payloadData, err := ioutil.ReadFile(payloadFilepath)
 	if err != nil {

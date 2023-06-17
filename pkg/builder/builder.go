@@ -1,6 +1,8 @@
 package builder
 
 import (
+	"encoding/hex"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -8,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-	"encoding/hex"
-	"fmt"
 
 	"github.com/guervild/uru/data"
 	"github.com/guervild/uru/pkg/common"
@@ -25,19 +25,19 @@ import (
 )
 
 type Builder struct {
-	Type          string
-	Args          string
-	ShellcodeData string
-	ShellcodeLen  string
-	Imports       []string
-	InstancesCode []string
-	FunctionsCode []string
-	Debug         bool
-	IsDLL         bool
-	IsService     bool
-	ExportNames   string
-	OutDirPath    string
-	ServiceName   	   string
+	Type               string
+	Args               string
+	ShellcodeData      string
+	ShellcodeLen       string
+	Imports            []string
+	InstancesCode      []string
+	FunctionsCode      []string
+	Debug              bool
+	IsDLL              bool
+	IsService          bool
+	ExportNames        string
+	OutDirPath         string
+	ServiceName        string
 	ServiceDisplayName string
 	ServiceDescription string
 }
@@ -64,7 +64,7 @@ type LimeLighterArgs struct {
 }
 
 type ServiceOptions struct {
-	ServiceName   	   string `yaml:"serviceName"`
+	ServiceName        string `yaml:"serviceName"`
 	ServiceDisplayName string `yaml:"serviceDisplayName"`
 	ServiceDescription string `yaml:"serviceDescription"`
 }
@@ -85,20 +85,19 @@ type Payload struct {
 }
 
 func NewPayloadConfigFromFile(data []byte) (PayloadConfig, error) {
-
 	var p PayloadConfig
 
 	err := yaml.Unmarshal(data, &p)
 	if err != nil {
-		return p, fmt.Errorf("Error while parsing config file: %v", err)
+		return p, fmt.Errorf("Error while parsing config file: %w", err)
 	}
 
 	return p, nil
 }
 
 func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, payload []byte, godonut, srdi, keep bool, parameters, functionName, class string, clearHeader bool) (string, []byte, error) {
-	//TODO rework createfilefunc
-	//define var that will be use later by generate
+	// TODO rework createfilefunc
+	// define var that will be use later by generate
 	currRandom := common.RandomString(4)
 	dataTmpl := data.GetTemplates()
 
@@ -114,13 +113,12 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 	var serviceDisplayName string
 	var serviceDescription string
 	var binFile string
-	var err error
 	var artifactList []string
 
-	//create output dir
+	// create output dir
 	tempFileBase := fmt.Sprintf("out_%s", currRandom)
 	dirPath, _ := filepath.Abs(path.Join("out", tempFileBase))
-	err = common.CreateDir(dirPath)
+	err := common.CreateDir(dirPath)
 	if err != nil {
 		return "", nil, err
 	}
@@ -129,19 +127,19 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 
 	payloadData := payload
 
-	//Process contents
+	// Process contents
 	arch, err := compiler.GetProperArch(payloadConfig.Payload.Arch, payloadConfig.Payload.Lang)
 	if err != nil {
 		return "", nil, err
 	}
 
-	//Setting extension
+	// Setting extension
 	var extension string
 	var buildmode string
 	isDLL := false
 	isService := false
 
-	//TODO clean that for services
+	// TODO clean that for services
 	if strings.ToLower(payloadConfig.Payload.Type) == "svc" {
 		isService = true
 		serviceName = payloadConfig.Payload.ServiceOptions.ServiceName
@@ -172,7 +170,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		imports = append(imports, thisCompiler.GetDebugImports()...)
 	}
 
-	if godonut == true && srdi == true {
+	if godonut && srdi {
 		return "", nil, fmt.Errorf("donut and srdi can't be passed together. Choose only one between the two arguments")
 	}
 
@@ -192,7 +190,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		payloadData = encoder.ConvertToSRDIShellcode(payloadData, functionName, parameters, clearHeader)
 	}
 
-	//[SGN] - DECOMMENT TO USE SGN
+	// [SGN] - DECOMMENT TO USE SGN
 	/*
 		if payloadConfig.Payload.Sgn {
 			logger.Logger.Info().Msg("Will use SGN on provided payload file")
@@ -207,7 +205,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		}
 	*/
 
-	//Prepend
+	// Prepend
 	if payloadConfig.Payload.Prepend != "" {
 		logger.Logger.Info().Msgf("Prepend is set")
 		logger.Logger.Info().Int("size", len(payloadData)).Msg("Payload size before prepend")
@@ -226,7 +224,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		logger.Logger.Info().Int("size", len(payloadData)).Msg("Payload size after prepend")
 	}
 
-	//Append
+	// Append
 	if payloadConfig.Payload.Append != "" {
 		logger.Logger.Info().Msgf("Append is set")
 		logger.Logger.Info().Int("size", len(payloadData)).Msg("Payload size before append")
@@ -256,7 +254,6 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 			}
 			encodersStringArray = append(encodersStringArray, artifactName)
 			encodersArray = append(encodersArray, artifactValue)
-
 		} else if artifactType == "evasion" {
 			artifactValue, err = evasion.GetEvasion(strings.ToLower(artifactName), payloadConfig.Payload.Lang)
 			if err != nil {
@@ -272,13 +269,13 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 			continue
 		}
 
-		//Use reflect to modify struct on fly
+		// Use reflect to modify struct on fly
 		if len(v.Args) > 0 {
 			for _, a := range v.Args {
 				if common.HasField(artifactValue, a.Name) {
 					logger.Logger.Info().Str("arg_name", a.Name).Str("arg_value", a.Value).Msg("Try to set artifact argument")
 					common.SetField(artifactValue, a.Name, a.Value)
-					logger.Logger.Info().Str("arg_name", a.Name).Str("arg_value", string(common.GetField(artifactValue, a.Name))).Msg("Value after setting the argument")
+					logger.Logger.Info().Str("arg_name", a.Name).Str("arg_value", common.GetField(artifactValue, a.Name)).Msg("Value after setting the argument")
 				}
 			}
 		}
@@ -312,18 +309,17 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		alreadyAddedArtifact = append(alreadyAddedArtifact, strings.ToLower(fmt.Sprintf("%s-%s", artifactType, artifactName)))
 	}
 
-	//Remove duplicate imports
+	// Remove duplicate imports
 	logger.Logger.Info().Msg("Removing duplicate imports")
 	imports = common.RemoveDuplicateStr(imports)
 
-	//Reverse encoding instance order
+	// Reverse encoding instance order
 	logger.Logger.Info().Msg("Will perform encoding...")
 	tmpPayloadData := payloadData
 	var tmpPayloadDataout []byte
 
 	// for each encoder specified, do encoding of payload
 	for i := len(encodersStringArray) - 1; i >= 0; i-- {
-
 		e := encodersStringArray[i]
 		artifactValue := encodersArray[i]
 		fileEntropyBefore, _ := common.GetFileEntropy(tmpPayloadData)
@@ -345,7 +341,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		method := methodIface.(func(s []byte) ([]byte, error))
 		tmpPayloadDataout, err = method(tmpPayloadData)
 		if err != nil {
-			return "", nil, fmt.Errorf("Error while encoding: %s", err)
+			return "", nil, fmt.Errorf("Error while encoding: %w", err)
 		}
 
 		tmpPayloadData = tmpPayloadDataout
@@ -375,17 +371,17 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 		isDLL = true
 	}
 
-	//Build builder struct to pass to the template
+	// Build builder struct to pass to the template
 	templateData := &Builder{
-		ShellcodeData: common.GetLanguageByteArray(payloadData, payloadConfig.Payload.Lang),
-		ShellcodeLen:  strconv.Itoa(len(payloadData)),
-		Imports:       imports,
-		InstancesCode: instancesCode,
-		FunctionsCode: functionsCode,
-		Debug:         debug,
-		IsDLL:         isDLL,
+		ShellcodeData:      common.GetLanguageByteArray(payloadData, payloadConfig.Payload.Lang),
+		ShellcodeLen:       strconv.Itoa(len(payloadData)),
+		Imports:            imports,
+		InstancesCode:      instancesCode,
+		FunctionsCode:      functionsCode,
+		Debug:              debug,
+		IsDLL:              isDLL,
 		IsService:          isService,
-		ExportNames:   exportNames,
+		ExportNames:        exportNames,
 		ServiceName:        serviceName,
 		ServiceDisplayName: serviceDisplayName,
 		ServiceDescription: serviceDescription,
@@ -393,10 +389,11 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 
 	// write out to go file
 	file, err := common.CreatePayloadFile("", payloadConfig.Payload.Lang, dirPath)
-	defer file.Close()
 	if err != nil {
 		return "", nil, err
 	}
+
+	defer file.Close()
 
 	err = tBuilder.Execute(file, templateData)
 	if err != nil {
@@ -419,27 +416,27 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 
 	// universal compilation
 	logger.Logger.Info().Str("filename", file.Name()).Msgf("Compiling ...\n")
-	//compile
+	// compile
 	err = thisCompiler.PrepareBuild(buildData)
 	if err != nil {
 		return "", nil, err
 	}
 	srcFilePath, _ := filepath.Abs(file.Name())
 
-	//if payloadConfig.Payload.OutFileName == "" {
-		// keep random bin file name, add out extension
-		binFile, _ = filepath.Abs(fmt.Sprintf("%s.%s", common.RemoveExt(file.Name()), extension))
-	//} else {
-	//	// get out file path, strip the random name, add the user specified name and extsenion
-	//	binFile, _ = filepath.Abs(fmt.Sprintf("%s/%s.%s", filepath.Dir(file.Name()), payloadConfig.Payload.OutFileName, extension))
-	//}
+	// if payloadConfig.Payload.OutFileName == "" {
+	// keep random bin file name, add out extension
+	binFile, _ = filepath.Abs(fmt.Sprintf("%s.%s", common.RemoveExt(file.Name()), extension))
+	// } else {
+	// 	// get out file path, strip the random name, add the user specified name and extsenion
+	// 	binFile, _ = filepath.Abs(fmt.Sprintf("%s/%s.%s", filepath.Dir(file.Name()), payloadConfig.Payload.OutFileName, extension))
+	// }
 
 	// build, report errors
 	_, err = thisCompiler.Build(srcFilePath, binFile)
 	if err != nil {
 		return "", nil, err
 	}
-	
+
 	// compute hashes
 	fileContent, err := os.ReadFile(binFile)
 	if err != nil {
@@ -450,7 +447,7 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 	logger.Logger.Info().Str("sha1", common.GetSHA1Hash(fileContent)).Msg("Get SHA1 hash of the payload")
 	logger.Logger.Info().Str("sha256", common.GetSHA256Hash(fileContent)).Msg("Get SHA256 hash of the payload")
 
-	//Signing
+	// Signing
 	if (payloadConfig.Payload.LimeLighterArgs != LimeLighterArgs{}) {
 		logger.Logger.Info().Str("file_to_sign", binFile).Msg("Using Limelighter by @Tyl0us")
 		fSigned, _ := filepath.Abs(fmt.Sprintf("%s_signed.%s", common.RemoveExt(binFile), extension))
@@ -479,7 +476,6 @@ func (payloadConfig *PayloadConfig) GenerateSupportedPayload(filename string, pa
 
 func (payloadConfig *PayloadConfig) GeneratePayload(filename string, payload []byte, godonut, srdi, keep bool,
 	parameters, functionName, class string, clearHeader bool) (string, []byte, error) {
-
 	if compiler.GetSupportedLangs(payloadConfig.Payload.Lang) {
 		return payloadConfig.GenerateSupportedPayload(filename, payload, godonut, srdi, keep, parameters, functionName,
 			class, clearHeader)

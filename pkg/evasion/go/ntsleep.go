@@ -26,7 +26,6 @@ func NewNtSleepEvasion() models.ObjectModel {
 }
 
 func (e *NtSleepEvasion) GetImports() []string {
-
 	return []string{
 		`"unsafe"`,
 		`"syscall"`,
@@ -35,11 +34,9 @@ func (e *NtSleepEvasion) GetImports() []string {
 }
 
 func (e *NtSleepEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/ntsleep/instanciation.go.tmpl", e)
 }
 
 func (e *NtSleepEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/ntsleep/functions.go.tmpl", e)
 }

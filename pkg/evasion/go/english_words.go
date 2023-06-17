@@ -16,7 +16,6 @@ type EnglishWordsEvasion struct {
 }
 
 func NewEnglishWordsEvasion() models.ObjectModel {
-
 	randomNumber := common.RandomInt(1, 999)
 	return &EnglishWordsEvasion{
 		Name: "english-words",
@@ -28,7 +27,6 @@ func NewEnglishWordsEvasion() models.ObjectModel {
 }
 
 func (e *EnglishWordsEvasion) GetImports() []string {
-
 	return []string{
 		`"os"`,
 		`"fmt"`,
@@ -36,7 +34,6 @@ func (e *EnglishWordsEvasion) GetImports() []string {
 }
 
 func (e *EnglishWordsEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	numberOfWord, err := strconv.Atoi(e.NumberOfWord)
 
 	if err != nil {
@@ -60,15 +57,14 @@ os.Stdout = nil
 
 	for i := 0; i <= numberOfWord; i++ {
 		currentRandomInt = common.RandomInt(1, 999)
-		words = words + fmt.Sprintf("const Word_%d = \"%s\"\nfmt.Println(Word_%d)\n", i, englishWords[currentRandomInt], i)
+		words += fmt.Sprintf("const Word_%d = \"%s\"\nfmt.Println(Word_%d)\n", i, englishWords[currentRandomInt], i)
 	}
 
-	words = words + "os.Stdout = temp"
+	words += "os.Stdout = temp"
 
 	return words, nil
 }
 
 func (e *EnglishWordsEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return "", nil
 }

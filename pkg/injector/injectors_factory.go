@@ -11,7 +11,6 @@ import (
 )
 
 func GetInjector(injectorType string, langType string) (models.ObjectModel, error) {
-
 	switch langType {
 	case "go":
 		if injectorType == "windows/native/local/execute_fp" {
@@ -27,7 +26,7 @@ func GetInjector(injectorType string, langType string) (models.ObjectModel, erro
 			return gobananaphone.NewNtQueueApcThreadExLocal(), nil
 		}
 		if injectorType == "windows/bananaphone/local/execute_fp" {
-			return gobananaphone.NewSyscallGoShellcode(), nil
+			return gobananaphone.NewExecuteFP(), nil
 		}
 		if injectorType == "windows/bananaphone/local/ninja_uuid" {
 			return gobananaphone.NewNinjaUUID(), nil

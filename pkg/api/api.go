@@ -37,7 +37,6 @@ func (a *App) Run(addr string) {
 }
 
 func (a *App) generatePayload(w http.ResponseWriter, r *http.Request) {
-
 	ip := r.RemoteAddr
 	xforward := r.Header.Get("X-Forwarded-For")
 	logger.Logger.Info().Str("IP", ip).Str("x-forwarded-for", xforward).Msg("New connection to the /generate endpoint")
@@ -126,7 +125,7 @@ func (a *App) generatePayload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//Process payload file
+	// Process payload file
 	payloadPath, _, err := payloadConfig.GeneratePayload(payloadFileHeader.Filename, payloadData.Bytes(), godonut, srdi, true, fParameters, fFunctionName, fClass, clearHeader)
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Error while generating the payload")
@@ -145,7 +144,6 @@ func (a *App) initializeRoutes() {
 }
 
 func (a *App) Initialize() {
-
 	a.Router = mux.NewRouter()
 	a.initializeRoutes()
 }

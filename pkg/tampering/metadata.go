@@ -29,7 +29,6 @@ type FileProperties struct {
 }
 
 func BuildFromJson(filename, arch, dirpath string) (string, error) {
-
 	if err := common.CheckIfFileExists(filename); err != nil {
 		return "", err
 	}

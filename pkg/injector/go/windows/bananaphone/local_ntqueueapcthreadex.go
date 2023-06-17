@@ -22,7 +22,6 @@ func NewNtQueueApcThreadExLocal() models.ObjectModel {
 }
 
 func (i *NtQueueApcThreadExLocal) GetImports() []string {
-
 	return []string{
 		`"syscall"`,
 		`"unsafe"`,
@@ -31,12 +30,10 @@ func (i *NtQueueApcThreadExLocal) GetImports() []string {
 	}
 }
 
-func (e *NtQueueApcThreadExLocal) RenderInstanciationCode(data embed.FS) (string, error) {
-
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ntqueueapcthreadex/instanciation.go.tmpl", e)
+func (i *NtQueueApcThreadExLocal) RenderInstanciationCode(data embed.FS) (string, error) {
+	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ntqueueapcthreadex/instanciation.go.tmpl", i)
 }
 
-func (e *NtQueueApcThreadExLocal) RenderFunctionCode(data embed.FS) (string, error) {
-
-	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ntqueueapcthreadex/functions.go.tmpl", e)
+func (i *NtQueueApcThreadExLocal) RenderFunctionCode(data embed.FS) (string, error) {
+	return common.CommonRendering(data, "templates/go/injector/windows/bananaphone/local/ntqueueapcthreadex/functions.go.tmpl", i)
 }

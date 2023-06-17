@@ -26,7 +26,6 @@ func RandomInt(start, end int) int {
 }
 
 func CommonRendering(data embed.FS, pathtorender string, i interface{}) (string, error) {
-
 	t, err := template.ParseFS(data, pathtorender)
 	if err != nil {
 		return "", err
@@ -43,7 +42,6 @@ func CommonRendering(data embed.FS, pathtorender string, i interface{}) (string,
 }
 
 func GetLanguageByteArray(data []byte, lang string) string {
-
 	var newData []string
 
 	if lang == "go" {
@@ -100,7 +98,7 @@ func ContainsStringInSlice(s []string, toFind string) bool {
 
 func ContainsStringInSliceIgnoreCase(s []string, toFind string) bool {
 	for _, a := range s {
-		if strings.ToLower(a) == strings.ToLower(toFind) {
+		if strings.EqualFold(a, toFind) {
 			return true
 		}
 	}
@@ -117,12 +115,12 @@ func HasField(v interface{}, name string) bool {
 	if rv.Kind() != reflect.Struct {
 		return false
 	}
-	return rv.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == strings.ToLower(name) }).IsValid()
+	return rv.FieldByNameFunc(func(n string) bool { return strings.EqualFold(n, name) }).IsValid()
 }
 
 func GetField(v interface{}, field string) string {
 	r := reflect.ValueOf(v)
-	f := reflect.Indirect(r).FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == strings.ToLower(field) })
+	f := reflect.Indirect(r).FieldByNameFunc(func(n string) bool { return strings.EqualFold(n, field) })
 	return f.String()
 }
 
@@ -130,8 +128,8 @@ func GetField(v interface{}, field string) string {
 func SetField(source interface{}, fieldName string, fieldValue string) {
 	v := reflect.ValueOf(source).Elem()
 
-	if v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == strings.ToLower(fieldName) }).CanSet() {
-		v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == strings.ToLower(fieldName) }).SetString(fieldValue)
+	if v.FieldByNameFunc(func(n string) bool { return strings.EqualFold(n, fieldName) }).CanSet() {
+		v.FieldByNameFunc(func(n string) bool { return strings.EqualFold(n, fieldName) }).SetString(fieldValue)
 	}
 }
 
@@ -139,11 +137,10 @@ func SetDebug(source interface{}, fieldName string, debugValue bool) {
 	if HasField(source, "debug") {
 		v := reflect.ValueOf(source).Elem()
 
-		if v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == strings.ToLower(fieldName) }).CanSet() {
-			v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == strings.ToLower(fieldName) }).SetBool(debugValue)
+		if v.FieldByNameFunc(func(n string) bool { return strings.EqualFold(n, fieldName) }).CanSet() {
+			v.FieldByNameFunc(func(n string) bool { return strings.EqualFold(n, fieldName) }).SetBool(debugValue)
 		}
 	}
-
 }
 
 const letterBytes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -178,9 +175,8 @@ func GetCurrentDate() string {
 	return t.Format(layout)
 }
 
-// TOD: Rework that function
+// TOD: Rework that function.
 func CreatePayloadFile(name, ext, source string) (*os.File, error) {
-
 	var path string
 	var file *os.File
 
@@ -191,10 +187,8 @@ func CreatePayloadFile(name, ext, source string) (*os.File, error) {
 	}
 
 	if name == "" || len(name) == 0 {
-
 		rand.Seed(time.Now().UnixNano())
 		path = fmt.Sprintf("%s_%s_main.%s", GetCurrentDate(), RandomString(4), extension)
-
 	} else {
 		path = fmt.Sprintf("%s.%s", name, extension)
 	}
@@ -204,13 +198,12 @@ func CreatePayloadFile(name, ext, source string) (*os.File, error) {
 	}
 
 	if _, err := os.Stat(path); err == nil {
-		//log.Printf("Error file \"%s\" already exists\n", path)
-		return nil, err
-
+		// log.Printf("Error file \"%s\" already exists\n", path)
+		return nil, fmt.Errorf("Error file \"%s\" already exists\n", path)
 	} else if os.IsNotExist(err) {
 		file, err = os.Create(path)
 		if err != nil {
-			//log.Printf("create file: ", err)
+			// log.Printf("create file: ", err)
 			return nil, err
 		}
 	}
@@ -223,7 +216,6 @@ func CreateDir(path string) error {
 }
 
 func RemoveExt(filename string) string {
-
 	var extension = filepath.Ext(filename)
 
 	if extension != "" {

@@ -3,9 +3,10 @@ package c
 import (
 	"embed"
 	"fmt"
+	"os"
+
 	"github.com/guervild/uru/pkg/models"
 	peparser "github.com/saferwall/pe"
-	"os"
 )
 
 var outFilePath = "data/templates/c/evasions/dllforward/example.def"
@@ -30,12 +31,10 @@ func NewCDllForwardEvasion() models.ObjectModel {
 }
 
 func (e *CDllForwardEvasion) GetImports() []string {
-
 	return []string{}
 }
 
 func (e *CDllForwardEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	// format export strings
 	exportLines, err := getNameAndOrdinal(e.File, e.ExpectedPath)
 
@@ -46,36 +45,34 @@ func (e *CDllForwardEvasion) RenderInstanciationCode(data embed.FS) (string, err
 	}
 
 	// write export lines to outfile
-	f.Write([]byte("EXPORTS\n"))
+	f.WriteString("EXPORTS\n")
 	for _, line := range exportLines {
-		f.Write([]byte(line))
+		f.WriteString(line)
 	}
 
 	return "", nil
 }
 
 func (e *CDllForwardEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return "", nil
 }
 
 func getNameAndOrdinal(file string, expectedPath string) ([]string, error) {
-
 	// out string array
 	var outArray []string
 
-	//parse inpute pe
+	// parse inpute pe
 	pe, err := peparser.New(file, &peparser.Options{})
 	if err != nil {
-		return nil, fmt.Errorf("Error while opening file: %s, reason: %v", file, err)
+		return nil, fmt.Errorf("Error while opening file: %s, reason: %w", file, err)
 	}
 
 	err = pe.Parse()
 	if err != nil {
-		return nil, fmt.Errorf("Error while parsing file: %s, reason: %v", file, err)
+		return nil, fmt.Errorf("Error while parsing file: %s, reason: %w", file, err)
 	}
 
-	//check if expected path == file path
+	// check if expected path == file path
 	if expectedPath == "" {
 		expectedPath = file
 	}
@@ -87,5 +84,4 @@ func getNameAndOrdinal(file string, expectedPath string) ([]string, error) {
 	}
 
 	return outArray, nil
-
 }

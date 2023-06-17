@@ -24,7 +24,6 @@ func NewSelfDeleteEvasion() models.ObjectModel {
 }
 
 func (e *SelfDeleteEvasion) GetImports() []string {
-
 	return []string{
 		`"syscall"`,
 		`"unsafe"`,
@@ -35,11 +34,9 @@ func (e *SelfDeleteEvasion) GetImports() []string {
 }
 
 func (e *SelfDeleteEvasion) RenderInstanciationCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/selfdelete/instanciation.go.tmpl", e)
 }
 
 func (e *SelfDeleteEvasion) RenderFunctionCode(data embed.FS) (string, error) {
-
 	return common.CommonRendering(data, "templates/go/evasions/selfdelete/functions.go.tmpl", e)
 }

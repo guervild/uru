@@ -22,7 +22,6 @@ func NewExecuteFP() models.ObjectModel {
 }
 
 func (i *ExecuteFP) GetImports() []string {
-
 	return []string{
 		`"syscall"`,
 		`"unsafe"`,
@@ -30,12 +29,10 @@ func (i *ExecuteFP) GetImports() []string {
 	}
 }
 
-func (e *ExecuteFP) RenderInstanciationCode(data embed.FS) (string, error) {
-
-	return common.CommonRendering(data, "templates/go/injector/windows/native/local/execute_fp/instanciation.go.tmpl", e)
+func (i *ExecuteFP) RenderInstanciationCode(data embed.FS) (string, error) {
+	return common.CommonRendering(data, "templates/go/injector/windows/native/local/execute_fp/instanciation.go.tmpl", i)
 }
 
-func (e *ExecuteFP) RenderFunctionCode(data embed.FS) (string, error) {
-
-	return common.CommonRendering(data, "templates/go/injector/windows/native/local/execute_fp/functions.go.tmpl", e)
+func (i *ExecuteFP) RenderFunctionCode(data embed.FS) (string, error) {
+	return common.CommonRendering(data, "templates/go/injector/windows/native/local/execute_fp/functions.go.tmpl", i)
 }

@@ -8,6 +8,5 @@ import (
 var templates embed.FS
 
 func GetTemplates() embed.FS {
-
 	return templates
 }
