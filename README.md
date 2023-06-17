@@ -398,6 +398,10 @@ Once the payload generated, you should see your message printed before your proc
 
 ## Contribution
 Do not hesitate to contribute with issue/pull request if you find a bug, or if you want to add features. Some possible features that i would like to implement next are in the [TODO.md](./TODO.md) file.
+### Contributors
+People who contributed to uru and help me to improve it :
+- [aggr0cr4g]( https://github.com/aggr0cr4g)
+- [rthomasbray]( https://github.com/rthomasbray)
 
 ## References/Credits
 - [ScareCrow](https://github.com/optiv/ScareCrow)
